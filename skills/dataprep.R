@@ -51,9 +51,20 @@ for (tech in names(g.tpa.cc.nz))
     }
     # print(paste("tech ...", tech))
     # print(g.tpa.cc.nz[[tech]])
+    #
     label <- tech
-    labels <- g.tpa.cc.nz[[tech]]$Level
+    #
+    levels <- g.tpa.cc.nz[[tech]]$Level
+    nlevels <- length(g.tpa.cc.nz[[tech]]$Level)
+    cnts <- g.tpa.cc.nz[[tech]]$Cnt
+    percentages <- round((cnts/sum(cnts))*100)
+    labels <- paste("lvl=",levels,",cnt=", cnts,", ", percentages, "%", sep="")
+    #
     slices <- g.tpa.cc.nz[[tech]]$Cnt
-    pie(slices, labels=labels, main=label)
+    #
+    pie(slices, 
+        labels=labels, 
+        main=label,
+        col=rainbow(nlevels))
 }
 
