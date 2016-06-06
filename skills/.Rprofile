@@ -14,6 +14,7 @@ options(max.print=100)
 .First <- function()
 {
     library(RSQLite)
+    library(sqldf)
     #
     if (file.exists("source_all.R"))
     {
