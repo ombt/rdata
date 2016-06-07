@@ -70,25 +70,37 @@ for (tech in names(g.tpa.cc.nz))
 
 closealldevs()
 
-fcnt <- 0
-while (file.exists(file2delete=paste("skills-",fcnt,".png",sep="")))
+fcnt <- 1
+fname<-""
+while (file.exists(fname<-paste("skills-",fcnt,".png",sep="")))
 {
-    file.remove(file2delete)
+    print(paste("deleting file ...", fname))
+    file.remove(fname)
     fcnt <- fcnt + 1
 }
 
+closealldevs()
+
+# mar <- par("mar")
+# closealldevs()
+
+maxrow <- 3
+maxcol <- 2
+maxwidth <- 600
+maxheight <- 500
+
+fcnt <- fcnt + 1;
+png(width=maxwidth,height=maxheight,
+    file=paste("skills-",fcnt,".png",sep=""))
+par(mfrow=c(maxrow,maxcol))
+
 fcnt <- 0
 pcnt <- 0
+
 for (tech in names(g.tpa.cc.nz))
 {
     pcnt <- pcnt + 1
-    if ((pcnt%%5) == 1)
-    {
-        closealldevs()
-        fcnt <- fcnt + 1;
-        png(file=paste("skills-",fcnt,".png",sep=""))
-        par(mfrow=c(3,2))
-    }
+    #
     # print(paste("tech ...", tech))
     # print(g.tpa.cc.nz[[tech]])
     #
@@ -106,5 +118,49 @@ for (tech in names(g.tpa.cc.nz))
         labels=labels, 
         main=label,
         col=rainbow(nlevels))
+    #
+    if ((pcnt%%(maxrow*maxcol-1)) == 1)
+    {
+        #par(mar=c(0,0,0,0))
+        plot(c(0, 1), c(0, 1), 
+             ann = F, 
+             bty = 'n', 
+             type = 'n', 
+             xaxt = 'n', 
+             yaxt = 'n')
+        text(x=0.5,y=0.5,
+            paste("Competence Level:\n",
+                  "Level 5 - World Class\n",
+                  "Level 4 - Advanced\n",
+                  "Level 3 - Intermediate\n",
+                  "Level 2 - Basic\n",
+                  "Level 1 - Initial\n", sep=""), 
+                  col="blue", cex=1.6)
+        closealldevs()
+        fcnt <- fcnt + 1;
+        png(width=maxwidth,height=maxheight,
+            file=paste("skills-",fcnt,".png",sep=""))
+        par(mfrow=c(maxrow,maxcol))
+    }
 }
+
+ if ((pcnt%%(maxrow*maxcol-1)) != 1)
+ {
+     #par(mar=c(0,0,0,0))
+     plot(c(0, 1), c(0, 1), 
+          ann = F, 
+          bty = 'n', 
+          type = 'n', 
+          xaxt = 'n', 
+          yaxt = 'n')
+     text(x=0.5,y=0.5,
+          paste("Competence Level:\n",
+                "Level 5 - World Class\n",
+                "Level 4 - Advanced\n",
+                "Level 3 - Intermediate\n",
+                "Level 2 - Basic\n",
+                "Level 1 - Initial\n", sep=""), 
+                col="blue", cex=1.6)
+}
+
 closealldevs()
