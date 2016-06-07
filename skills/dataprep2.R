@@ -84,13 +84,14 @@ closealldevs()
 # mar <- par("mar")
 # closealldevs()
 
-maxrow <- 3
+maxrow <- 2
 maxcol <- 2
-maxwidth <- 600
-maxheight <- 500
+maxwidth <- 1000
+maxheight <- 700
+pointsize <- 16
 
 fcnt <- fcnt + 1;
-png(width=maxwidth,height=maxheight,
+png(width=maxwidth,height=maxheight,pointsize=pointsize,
     file=paste("skills-",fcnt,".png",sep=""))
 par(mfrow=c(maxrow,maxcol))
 
@@ -135,10 +136,10 @@ for (tech in names(g.tpa.cc.nz))
                   "Level 3 - Intermediate\n",
                   "Level 2 - Basic\n",
                   "Level 1 - Initial\n", sep=""), 
-                  col="blue", cex=1.6)
+                  col="blue", cex=1.2)
         closealldevs()
         fcnt <- fcnt + 1;
-        png(width=maxwidth,height=maxheight,
+        png(width=maxwidth,height=maxheight,pointsize=pointsize,
             file=paste("skills-",fcnt,".png",sep=""))
         par(mfrow=c(maxrow,maxcol))
     }
@@ -160,7 +161,7 @@ for (tech in names(g.tpa.cc.nz))
                 "Level 3 - Intermediate\n",
                 "Level 2 - Basic\n",
                 "Level 1 - Initial\n", sep=""), 
-                col="blue", cex=1.6)
+                col="blue", cex=1.2)
 }
 
 closealldevs()
