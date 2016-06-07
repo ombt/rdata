@@ -70,13 +70,14 @@ for (tech in names(g.tpa.cc.nz))
 
 closealldevs()
 
-fcnt <- 1
-fname<-""
-while (file.exists(fname<-paste("skills-",fcnt,".png",sep="")))
+for (fcnt in 1:20)
 {
-    print(paste("deleting file ...", fname))
-    file.remove(fname)
-    fcnt <- fcnt + 1
+    fname <- paste("skills-",fcnt,".png",sep="")
+    if (file.exists(fname))
+    {
+        print(paste("deleting file ...", fname))
+        file.remove(fname)
+    }
 }
 
 closealldevs()
