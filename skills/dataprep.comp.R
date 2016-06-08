@@ -53,7 +53,8 @@ for (tech in sort(names(g.tpa.cc.no.na.nz)))
         x11(width=maxwidth,
             height=maxheight,
             pointsize=pointsize)
-        par(mfrow=c(maxrow,maxcol))
+        # par(mfrow=c(maxrow,maxcol))
+        par(mfcol=c(maxrow,maxcol))
     }
     #
     # generate labels
@@ -108,7 +109,8 @@ for (tech in sort(names(g.tpa.cc.no.na.nz)))
             height=maxheight,
             pointsize=pointsize,
             file=paste("skills-competency-",fcnt,".png",sep=""))
-        par(mfrow=c(maxrow,maxcol))
+        # par(mfrow=c(maxrow,maxcol))
+        par(mfcol=c(maxrow,maxcol))
     }
     #
     # labels for charts
