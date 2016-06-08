@@ -44,6 +44,9 @@ colors <- rainbow(5)
 pcnt <- 0
 for (tech in sort(names(g.tpa.cc.no.na.nz)))
 {
+    #
+    # start up a new X11 display
+    #
     pcnt <- pcnt + 1
     if ((pcnt%%(maxrow*maxcol)) == 1)
     {
@@ -53,10 +56,14 @@ for (tech in sort(names(g.tpa.cc.no.na.nz)))
         par(mfrow=c(maxrow,maxcol))
     }
     #
+    # generate labels
+    #
     mainlabel <- gsub(".", " ", as.character(tech), fixed=TRUE)
     mainlabel <- gsub("5G 5G", "5G", mainlabel, fixed=TRUE)
     totalcnts <- sum(g.tpa.cc.no.na.nz[[tech]]$Cnt)
     mainlabel <- paste(mainlabel, "(", totalcnts, ")")
+    #
+    # get data for pie charts
     #
     levels <- g.tpa.cc.no.na.nz[[tech]]$Level
     nlevels <- length(g.tpa.cc.no.na.nz[[tech]]$Level)
@@ -66,6 +73,7 @@ for (tech in sort(names(g.tpa.cc.no.na.nz)))
     #
     slices <- g.tpa.cc.no.na.nz[[tech]]$Cnt
     #
+    # draw pie chart
     #
     pie(slices, 
         labels=labels, 
@@ -73,17 +81,24 @@ for (tech in sort(names(g.tpa.cc.no.na.nz)))
         col=colors[levels],
         font=4)
 }
-
+#
+# reset params for png file as output
+#
 maxrow <- 2
 maxcol <- 3
 maxwidth <- 1400
 maxheight <- 800
 pointsize <- 20
-
+#
+# start drawing graphs
+#
 fcnt <- 0
 pcnt <- 0
 for (tech in sort(names(g.tpa.cc.no.na.nz)))
 {
+    #
+    # create output png file for pie charts
+    #
     pcnt <- pcnt + 1
     if ((pcnt%%(maxrow*maxcol)) == 1)
     {
@@ -92,14 +107,18 @@ for (tech in sort(names(g.tpa.cc.no.na.nz)))
         png(width=maxwidth,
             height=maxheight,
             pointsize=pointsize,
-            file=paste("skills-",fcnt,".png",sep=""))
+            file=paste("skills-competency-",fcnt,".png",sep=""))
         par(mfrow=c(maxrow,maxcol))
     }
+    #
+    # labels for charts
     #
     mainlabel <- gsub(".", " ", as.character(tech), fixed=TRUE)
     mainlabel <- gsub("5G 5G", "5G", mainlabel, fixed=TRUE)
     totalcnts <- sum(g.tpa.cc.no.na.nz[[tech]]$Cnt)
     mainlabel <- paste(mainlabel, "(", totalcnts, ")")
+    #
+    # data for charts
     #
     levels <- g.tpa.cc.no.na.nz[[tech]]$Level
     nlevels <- length(g.tpa.cc.no.na.nz[[tech]]$Level)
@@ -109,6 +128,7 @@ for (tech in sort(names(g.tpa.cc.no.na.nz)))
     #
     slices <- g.tpa.cc.no.na.nz[[tech]]$Cnt
     #
+    # draw chart
     #
     pie(slices, 
         labels=labels, 
