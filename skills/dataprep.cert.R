@@ -5,30 +5,31 @@ library(sqldf)
 #
 # use sql command to generate counts per level.
 #
-sqlcmd = "select ToolName, Knowlegeable as Knowledgeable, count(Knowlegeable) as Cnt from tool group by ToolName, Knowlegeable order by ToolName, Knowlegeable"
+sqlcmd = "select Source, Grp, Achieved, count(Achieved) as Cnt from cert group by Source, Grp, Achieved order by Source, Grp, Achieved"
 # 
-tool.cnts = sqldf(sqlcmd)
-head(tool.cnts)
+cert.cnts = sqldf(sqlcmd)
+head(cert.cnts)
 #
 # remove NA values
 #
-tool.cnts.no.na = tool.cnts[ ! is.na(tool.cnts$Knowledgeable),]
-head(tool.cnts.no.na)
+cert.cnts.no.na = cert.cnts[ ! is.na(cert.cnts$Achieved),]
+head(cert.cnts.no.na)
 #
 # group by Tool.Name 
 #
-grouped.toolname.tool.cnts.no.na <- 
-    split(tool.cnts.no.na, 
-          list(tool.cnts.no.na$ToolName))
+grouped.source.group.cert.cnts.no.na <- 
+    split(cert.cnts.no.na, 
+          list(cert.cnts.no.na$Source,
+               cert.cnts.no.na$Grp))
 #
 # short cuts and remove any entries with no records.
 #
-g.t.tc.no.na <- 
-    grouped.toolname.tool.cnts.no.na
-g.t.tc.no.na.cnt <- 
-    lapply(g.t.tc.no.na, nrow)
-g.t.tc.no.na.nz <- 
-    g.t.tc.no.na[names(g.t.tc.no.na.cnt[g.t.tc.no.na.cnt!=0])]
+g.sg.cc.no.na <- 
+    grouped.source.group.cert.cnts.no.na
+g.sg.cc.no.na.cnt <- 
+    lapply(g.sg.cc.no.na, nrow)
+g.sg.cc.no.na.nz <- 
+    g.sg.cc.no.na[names(g.sg.cc.no.na.cnt[g.sg.cc.no.na.cnt!=0])]
 #
 # X11 plot to see what it looks like for now.
 # 
@@ -41,7 +42,7 @@ colors <- rainbow(2)
 yesno <- list(Yes=1,No=2)
 #
 pcnt <- 0
-for (tech in sort(names(g.t.tc.no.na.nz)))
+for (tech in sort(names(g.sg.cc.no.na.nz)))
 {
     #
     # start up a new X11 display
@@ -58,18 +59,18 @@ for (tech in sort(names(g.t.tc.no.na.nz)))
     # generate labels
     #
     mainlabel <- gsub(".", " ", as.character(tech), fixed=TRUE)
-    totalcnts <- sum(g.t.tc.no.na.nz[[tech]]$Cnt)
+    totalcnts <- sum(g.sg.cc.no.na.nz[[tech]]$Cnt)
     mainlabel <- paste(mainlabel, "(", totalcnts, ")")
     #
     # get data for pie charts
     #
-    levels <- g.t.tc.no.na.nz[[tech]]$Knowledgeable
-    nlevels <- length(g.t.tc.no.na.nz[[tech]]$Knowledgeable)
-    cnts <- g.t.tc.no.na.nz[[tech]]$Cnt
+    levels <- g.sg.cc.no.na.nz[[tech]]$Achieved
+    nlevels <- length(g.sg.cc.no.na.nz[[tech]]$Achieved)
+    cnts <- g.sg.cc.no.na.nz[[tech]]$Cnt
     percentages <- round((cnts/sum(cnts))*100)
     labels <- paste("lvl=",levels,", cnt=", cnts,", ", percentages, "%", sep="")
     #
-    slices <- g.t.tc.no.na.nz[[tech]]$Cnt
+    slices <- g.sg.cc.no.na.nz[[tech]]$Cnt
     #
     # draw pie chart
     #
@@ -92,7 +93,7 @@ pointsize <- 20
 #
 fcnt <- 0
 pcnt <- 0
-for (tech in sort(names(g.t.tc.no.na.nz)))
+for (tech in sort(names(g.sg.cc.no.na.nz)))
 {
     #
     # create output png file for pie charts
@@ -105,25 +106,25 @@ for (tech in sort(names(g.t.tc.no.na.nz)))
         png(width=maxwidth,
             height=maxheight,
             pointsize=pointsize,
-            file=paste("skills-newtools-",fcnt,".png",sep=""))
+            file=paste("skills-cert-",fcnt,".png",sep=""))
         par(mfrow=c(maxrow,maxcol))
     }
     #
     # labels for charts
     #
     mainlabel <- gsub(".", " ", as.character(tech), fixed=TRUE)
-    totalcnts <- sum(g.t.tc.no.na.nz[[tech]]$Cnt)
+    totalcnts <- sum(g.sg.cc.no.na.nz[[tech]]$Cnt)
     mainlabel <- paste(mainlabel, "(", totalcnts, ")")
     #
     # data for charts
     #
-    levels <- g.t.tc.no.na.nz[[tech]]$Knowledgeable
-    nlevels <- length(g.t.tc.no.na.nz[[tech]]$Knowledgeable)
-    cnts <- g.t.tc.no.na.nz[[tech]]$Cnt
+    levels <- g.sg.cc.no.na.nz[[tech]]$Achieved
+    nlevels <- length(g.sg.cc.no.na.nz[[tech]]$Achieved)
+    cnts <- g.sg.cc.no.na.nz[[tech]]$Cnt
     percentages <- round((cnts/sum(cnts))*100)
     labels <- paste("lvl=",levels,", cnt=", cnts,", ", percentages, "%", sep="")
     #
-    slices <- g.t.tc.no.na.nz[[tech]]$Cnt
+    slices <- g.sg.cc.no.na.nz[[tech]]$Cnt
     #
     # draw chart
     #
