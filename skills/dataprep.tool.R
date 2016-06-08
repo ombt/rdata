@@ -32,7 +32,7 @@ g.t.tc.no.na.nz <-
 #
 # X11 plot to see what it looks like for now.
 # 
-maxrow <- 3
+maxrow <- 2
 maxcol <- 2
 maxwidth <- 11.0
 maxheight <- 9.0
@@ -58,7 +58,6 @@ for (tech in sort(names(g.t.tc.no.na.nz)))
     # generate labels
     #
     mainlabel <- gsub(".", " ", as.character(tech), fixed=TRUE)
-    # mainlabel <- gsub("5G 5G", "5G", mainlabel, fixed=TRUE)
     totalcnts <- sum(g.t.tc.no.na.nz[[tech]]$Cnt)
     mainlabel <- paste(mainlabel, "(", totalcnts, ")")
     #
@@ -77,64 +76,63 @@ for (tech in sort(names(g.t.tc.no.na.nz)))
     pie(slices, 
         labels=labels, 
         main=mainlabel,
-        col=colors[as.vector(yesno[levels])],
+        col=colors[as.integer(yesno[levels])],
         font=4)
 }
-# #
-# # reset params for png file as output
-# #
-# maxrow <- 2
-# maxcol <- 3
-# maxwidth <- 1400
-# maxheight <- 800
-# pointsize <- 20
-# #
-# # start drawing graphs
-# #
-# fcnt <- 0
-# pcnt <- 0
-# for (tech in sort(names(g.tpa.cc.no.na.nz)))
-# {
-#     #
-#     # create output png file for pie charts
-#     #
-#     pcnt <- pcnt + 1
-#     if ((pcnt%%(maxrow*maxcol)) == 1)
-#     {
-#         closealldevs()
-#         fcnt <- fcnt + 1;
-#         png(width=maxwidth,
-#             height=maxheight,
-#             pointsize=pointsize,
-#             file=paste("skills-competency-",fcnt,".png",sep=""))
-#         par(mfrow=c(maxrow,maxcol))
-#     }
-#     #
-#     # labels for charts
-#     #
-#     mainlabel <- gsub(".", " ", as.character(tech), fixed=TRUE)
-#     mainlabel <- gsub("5G 5G", "5G", mainlabel, fixed=TRUE)
-#     totalcnts <- sum(g.tpa.cc.no.na.nz[[tech]]$Cnt)
-#     mainlabel <- paste(mainlabel, "(", totalcnts, ")")
-#     #
-#     # data for charts
-#     #
-#     levels <- g.tpa.cc.no.na.nz[[tech]]$Level
-#     nlevels <- length(g.tpa.cc.no.na.nz[[tech]]$Level)
-#     cnts <- g.tpa.cc.no.na.nz[[tech]]$Cnt
-#     percentages <- round((cnts/sum(cnts))*100)
-#     labels <- paste("lvl=",levels,", cnt=", cnts,", ", percentages, "%", sep="")
-#     #
-#     slices <- g.tpa.cc.no.na.nz[[tech]]$Cnt
-#     #
-#     # draw chart
-#     #
-#     pie(slices, 
-#         labels=labels, 
-#         main=mainlabel,
-#         col=colors[levels],
-#         font=4)
-# }
+#
+# reset params for png file as output
+#
+maxrow <- 2
+maxcol <- 2
+maxwidth <- 1400
+maxheight <- 800
+pointsize <- 20
+#
+# start drawing graphs
+#
+fcnt <- 0
+pcnt <- 0
+for (tech in sort(names(g.t.tc.no.na.nz)))
+{
+    #
+    # create output png file for pie charts
+    #
+    pcnt <- pcnt + 1
+    if ((pcnt%%(maxrow*maxcol)) == 1)
+    {
+        closealldevs()
+        fcnt <- fcnt + 1;
+        png(width=maxwidth,
+            height=maxheight,
+            pointsize=pointsize,
+            file=paste("skills-newtools-",fcnt,".png",sep=""))
+        par(mfrow=c(maxrow,maxcol))
+    }
+    #
+    # labels for charts
+    #
+    mainlabel <- gsub(".", " ", as.character(tech), fixed=TRUE)
+    totalcnts <- sum(g.t.tc.no.na.nz[[tech]]$Cnt)
+    mainlabel <- paste(mainlabel, "(", totalcnts, ")")
+    #
+    # data for charts
+    #
+    levels <- g.t.tc.no.na.nz[[tech]]$Knowledgeable
+    nlevels <- length(g.t.tc.no.na.nz[[tech]]$Knowledgeable)
+    cnts <- g.t.tc.no.na.nz[[tech]]$Cnt
+    percentages <- round((cnts/sum(cnts))*100)
+    labels <- paste("lvl=",levels,", cnt=", cnts,", ", percentages, "%", sep="")
+    #
+    slices <- g.t.tc.no.na.nz[[tech]]$Cnt
+    #
+    # draw chart
+    #
+    pie(slices, 
+        labels=labels, 
+        main=mainlabel,
+        col=colors[as.integer(yesno[levels])],
+        font=4)
+}
 # 
-# closealldevs()
+closealldevs()
 # 
