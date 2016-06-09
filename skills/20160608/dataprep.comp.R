@@ -89,7 +89,7 @@ maxrow <- 2
 maxcol <- 3
 maxwidth <- 1400
 maxheight <- 800
-pointsize <- 20
+pointsize <- 18
 #
 # start drawing graphs
 #
