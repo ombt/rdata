@@ -105,7 +105,7 @@ plot_skills <- function(ptype="x11")
                         main=paste(source,":", group),
                         names.arg=gsub(" ", "\n", labels),
                         ylim=c(0,maxy),
-                        ylab=group)
+                        ylab="Head Count")
             }
         }
     }
