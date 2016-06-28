@@ -1,12 +1,42 @@
 #
 sqlite_load_angelo_npm_w1_0830 <- function(nrows=0)
 {
-    return(sqlite_load_u0x("angelo_npm_w1_0830",nrows))
+    return(sqlite_load_u0x("combined_angelo_npm_w1_0830",nrows))
 }
 
 sqlite_load_nv_angelo_npm_w1_0830 <- function(nrows=0)
 {
-    return(sqlite_load_nv_u0x("angelo_npm_w1_0830",nrows))
+    return(sqlite_load_nv_u0x("combined_angelo_npm_w1_0830",nrows))
+}
+
+sqlite_load_denorm_data <- function(nrows=0)
+{
+    db_name = "combined_angelo_npm_w1_0830"
+    #
+    db_path = Sys.getenv("OMBT_DB_BASE_PATH")
+    if ((db_path == "") | is.na(db_path))
+    {
+        stop("OMBT_DB_BASE_PATH not set or zero-length")
+    }
+    #
+    db = sqlite_open_db(db_path, db_name)
+    #
+    denorm_data_tbls = c("denorm_data")
+    #
+    data = list()
+    #
+    for (tbl in denorm_data_tbls)
+    {
+        print(paste("reading denormalized data table", tbl, "at", Sys.time()))
+        data[[tbl]] = sqlite_load_table_from_db(db,
+                                                tbl,
+                                                nrows=nrows)
+        print(paste("done reading table", tbl, "at", Sys.time()))
+    }
+    #
+    sqlite_close_db(db)
+    #
+    return(data)
 }
 
 # #
