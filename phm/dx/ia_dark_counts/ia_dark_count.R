@@ -312,7 +312,10 @@ if (is.null(options$params)) {
     options$params <- "parameters.csv"
 }
 if (is.null(options$config)) {
-    options$config <- "config.csv"
+    options$config <- file.path(path.expand("~"),
+                                "config",
+                                "dx",
+                                "config.csv")
 }
 #
 # change to working directory

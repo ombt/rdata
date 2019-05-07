@@ -337,10 +337,13 @@ if (is.null(options$chart)) {
     options$chart <- FALSE
 }
 if (is.null(options$params)) {
-    options$config <- sprintf("%s/config/dx/config.csv", Sys.getenv("HOME"))
+    options$config <- "params.csv"
 }
 if (is.null(options$config)) {
-    options$config <- "config.csv"
+    options$config <- file.path(path.expand("~"),
+                                "config",
+                                "dx",
+                                "config.csv")
 }
 #
 # change to working directory

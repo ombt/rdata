@@ -235,7 +235,10 @@ if (is.null(options$params)) {
     options$params <- "parameters.csv"
 }
 if (is.null(options$config)) {
-    options$config <- sprintf("%s/config/dx/config.csv", Sys.getenv("HOME"))
+    options$config <- file.path(path.expand("~"),
+                                "config",
+                                "dx",
+                                "config.csv")
 }
 #
 # change to working directory
