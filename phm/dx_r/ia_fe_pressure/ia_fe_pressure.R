@@ -28,8 +28,7 @@ library(dplyr)
 # local functions
 #
 usage <- function() {
-    args <- commandArgs()
-    print(sprintf("usage: %s [-h] [-C] -c config.file -p param.file -w workdir",args[1]))
+    print("usage: script.R [-h] [-C] -w work.dir [-c config.file] [-p param.file] [-o output.file]")
 }
 #
 read_csv_file <- function(filename, type_of_file)
@@ -290,7 +289,7 @@ if ( ! is.null(options$help)) {
 # set default values
 #
 if (is.null(options$output)) {
-    options$output <- "dx.r.results.csv"
+    options$output <- "results.csv"
 }
 if (is.null(options$chart)) {
     options$chart <- FALSE
@@ -299,15 +298,16 @@ if (is.null(options$params)) {
     options$params <- "parameters.csv"
 }
 if (is.null(options$config)) {
-    options$config <- "dx.r.config.csv"
+    options$config <- sprintf("%s/config/dx/config.csv", Sys.getenv("HOME"))
 }
 #
 # change to working directory
 #
 if (is.null(options$work)) {
-    stop("working directory was not given.")
+    message("Working directory was not given. Default to current directory.")
+} else {
+    setwd(options$work)
 }
-setwd(options$work)
 #
 # read in config file
 #

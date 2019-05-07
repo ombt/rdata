@@ -273,7 +273,7 @@ if ( ! is.null(options$help)) {
 # set default values
 #
 if (is.null(options$output)) {
-    options$output <- "dx.r.results.csv"
+    options$output <- "results.csv"
 }
 if (is.null(options$chart)) {
     options$chart <- FALSE
@@ -282,15 +282,16 @@ if (is.null(options$params)) {
     options$params <- "parameters.csv"
 }
 if (is.null(options$config)) {
-    options$config <- "dx.r.config.csv"
+    options$config <- sprintf("%s/config/dx/config.csv", Sys.getenv("HOME"))
 }
 #
 # change to working directory
 #
 if (is.null(options$work)) {
-    stop("working directory was not given.")
+    message("Working directory was not given. Default to current directory.")
+} else {
+    setwd(options$work)
 }
-setwd(options$work)
 #
 # read in config file
 #

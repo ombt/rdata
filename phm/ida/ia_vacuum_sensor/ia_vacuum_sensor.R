@@ -299,15 +299,16 @@ if (is.null(options$params)) {
     options$params <- "parameters.csv"
 }
 if (is.null(options$config)) {
-    options$config <- "config.csv"
+    options$config <- sprintf("%s/config/ida/config.csv", Sys.getenv("HOME"))
 }
 #
 # change to working directory
 #
 if (is.null(options$work)) {
-    stop("working directory was not given.")
+    message("Working directory was not given. Default to current directory.")
+} else {
+    setwd(options$work)
 }
-setwd(options$work)
 #
 # read in config file
 #

@@ -15,8 +15,7 @@ library(dplyr)
 # local functions
 #
 usage <- function() {
-    args <- commandArgs()
-    print(sprintf("usage: %s [-h] [-C] -c config.file -p param.file -w workdir",args[1]))
+    print("usage: script.R [-h] [-C] -w work.dir [-c config.file] [-p param.file] [-o output.file]")
 }
 #
 read_csv_file <- function(filename, type_of_file)
@@ -339,15 +338,16 @@ if (is.null(options$params)) {
     options$params <- "parameters.csv"
 }
 if (is.null(options$config)) {
-    options$config <- "config.csv"
+    options$config <- sprintf("%s/config/ida/config.csv", Sys.getenv("HOME"))
 }
 #
 # change to working directory
 #
 if (is.null(options$work)) {
-    stop("working directory was not given.")
+    message("Working directory was not given. Default to current directory.")
+} else {
+    setwd(options$work)
 }
-setwd(options$work)
 #
 # read in config file
 #
