@@ -304,7 +304,7 @@ if ( ! is.null(options$help)) {
 # set default values
 #
 if (is.null(options$output)) {
-    options$output <- "athena.results.csv"
+    options$output <- "results.csv"
 }
 if (is.null(options$chart)) {
     options$chart <- FALSE
@@ -313,7 +313,7 @@ if (is.null(options$params)) {
     options$params <- "parameters.csv"
 }
 if (is.null(options$config)) {
-    options$config <- "athena.config.csv"
+    options$config <- "config.csv"
 }
 #
 # change to working directory
