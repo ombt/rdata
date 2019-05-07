@@ -1,0 +1,356 @@
+#
+# Alinity IA Optics Dark Count
+#
+#####################################################################
+#
+# required libraries
+#
+library(getopt)
+library(DBI)
+library(RJDBC)
+library(dplyr)
+#
+#####################################################################
+#
+# local functions
+#
+usage <- function() {
+    args <- commandArgs()
+    print(sprintf("usage: %s [-h] [-C] -c config.file -p param.file -w workdir",args[1]))
+}
+#
+read_csv_file <- function(filename, type_of_file)
+{
+    #
+    # sanity checks on file
+    #
+    if (is.null(filename)) {
+        stop(sprintf("%s file was not given.", type_of_file))
+    } else if ( ! file.exists(filename)) {
+        stop(sprintf("%s file %s does not exist.", type_of_file, filename))
+    }
+    #
+    return(read.csv(filename, stringsAsFactors=FALSE))
+}
+#
+exec_query <- function(params, 
+                       db_conn, 
+                       query_template, 
+                       config, 
+                       options, 
+                       flagged)
+{
+    query_template <- gsub("[\n\r]"," ", query_template)
+    #
+    # easy to access parameters if we assign row names
+    #
+    rownames(params) <- params[,"PARAMETER_NAME"]
+    #
+    # substitute values into query
+    #
+    query <- sprintf(query_template, 
+                     config["START_DATE",
+                            "VALUE"],
+                     config["END_DATE",
+                            "VALUE"],
+                     params["THRESHOLDS_COUNT", 
+                            "PARAMETER_VALUE"],
+                     params["TESTID", 
+                            "PARAMETER_VALUE"],
+                     params["INTEGRATEDDARKCOUNT_MAX", 
+                            "PARAMETER_VALUE"],
+                     params["INTEGRATEDDARKCOUNT_SD", 
+                            "PARAMETER_VALUE"])
+    #
+    results <- dbGetQuery(db_conn, query)
+    #
+    # add extra columns required in the output file
+    #
+    results$FLAG_DATE <- config["START_DATE", 
+                                "VALUE"]
+    results$PHN_PATTERNS_SK <- params["TESTID", 
+                                      "PHM_PATTERNS_SK_DUP"]
+    results$IHM_LEVEL3_DESC <- params["IHN_LEVEL3_DESC",
+                                      "PARAMETER_VALUE"]
+    results$THRESHOLD_DESCRIPTION <- params["THRESHOLD DESCRIPTION",
+                                            "PARAMETER_VALUE"]
+    #
+    results$FLAG_YN <- flagged
+    results$CHART_DATA_VALUE <- ifelse((flagged == "Y"), 1, 0)
+    results$CHART_DATA_VALUE_TYPE <- "FLAGGED"
+    #
+    if ((flagged == "Y") || (options$chart)) {
+        results_num_tested <- results
+        results_num_tested$CHART_DATA_VALUE <- results$NUM_TESTID
+        results_num_tested$CHART_DATA_VALUE_TYPE <- "NUM_TESTID"
+        #
+        results_max_idc <- results
+        results_max_idc$CHART_DATA_VALUE <- results$MAX_IDC
+        results_max_idc$CHART_DATA_VALUE_TYPE <- "MAX_IDC"
+        #
+        results_sd_idc <- results
+        results_sd_idc$CHART_DATA_VALUE <- results$SD_IDC
+        results_sd_idc$CHART_DATA_VALUE_TYPE <- "SD_IDC"
+        #
+        return(rbind(results, 
+                     results_num_tested,
+                     results_max_idc,
+                     results_sd_idc))
+    } else {
+        return(results)
+    }
+}
+#
+exec_flagged_query <- function(param_sets, db_conn, config, options)
+{
+    #
+    # build query
+    #
+    query_template <- "
+select
+    icqr.deviceid as deviceid,
+    icqr.modulesn as modulesn,
+    count(icqr.testid) as num_testid,
+    max(icqr.integrateddarkcount) as max_idc,
+    stddev(icqr.integrateddarkcount) as sd_idc
+from
+     idaqowner.icq_results icqr
+where
+    to_timestamp('%s', 'MM/DD/YYYY HH24:MI:SS') <= icqr.logdate_local
+and 
+    icqr.logdate_local < to_timestamp('%s', 'MM/DD/YYYY HH24:MI:SS')
+and
+    icqr.integrateddarkcount is not null
+and
+    icqr.integrateddarkcount >= %s
+and
+    upper(icqr.modulesn) like 'AI%%'
+group by
+    icqr.deviceid,
+    icqr.modulesn
+having
+    count(icqr.testid) >= %s
+and
+    max(icqr.integrateddarkcount) >= %s
+and
+    stddev(icqr.integrateddarkcount) >= %s
+order by
+    icqr.deviceid,
+    icqr.modulesn"
+    #
+    flagged <- "Y"
+    #
+    results <- lapply(param_sets, 
+                      exec_query, 
+                      db_conn, 
+                      query_template,
+                      config,
+                      options,
+                      flagged)
+    #
+    return(results)
+}
+#
+exec_not_flagged_query <- function(param_sets, db_conn, config, options)
+{
+    #
+    # build query
+    #
+    query_template <- "
+select
+    icqr.deviceid as deviceid,
+    icqr.modulesn as modulesn,
+    count(icqr.testid) as num_testid,
+    max(icqr.integrateddarkcount) as max_idc,
+    stddev(icqr.integrateddarkcount) as sd_idc
+from
+     idaqowner.icq_results icqr
+where
+    to_timestamp('%s', 'MM/DD/YYYY HH24:MI:SS') <= icqr.logdate_local
+and 
+    icqr.logdate_local < to_timestamp('%s', 'MM/DD/YYYY HH24:MI:SS')
+and
+    icqr.integrateddarkcount is not null
+and
+    icqr.integrateddarkcount >= %s
+and
+    upper(icqr.modulesn) like 'AI%%'
+group by
+    icqr.deviceid,
+    icqr.modulesn
+having not (
+    count(icqr.testid) >= %s
+and
+    max(icqr.integrateddarkcount) >= %s
+and
+    stddev(icqr.integrateddarkcount) >= %s
+)
+order by
+    icqr.deviceid,
+    icqr.modulesn "
+    #
+    flagged <- "N"
+    #
+    results <- lapply(param_sets, 
+                      exec_query, 
+                      db_conn, 
+                      query_template,
+                      config,
+                      options,
+                      flagged)
+    #
+    return(results)
+}
+#
+write_results <- function(options,
+                          flagged_records,
+                          not_flagged_records)
+{
+    append <- FALSE
+    col.names <- TRUE
+    #
+    for (record in flagged_records) {
+        write.table(record, 
+                    file=options$output, 
+                    append=append,
+                    row.names=FALSE,
+                    col.names=col.names,
+                    sep=",")
+        append <- TRUE
+        col.names <- FALSE
+    }
+    #
+    for (record in not_flagged_records) {
+        write.table(record, 
+                    file=options$output, 
+                    append=append,
+                    row.names=FALSE,
+                    col.names=col.names,
+                    sep=",")
+        append <- TRUE
+        col.names <- FALSE
+    }
+}
+#
+generate_data <- function(param_sets, config, options)
+{
+    #
+    # open database connection
+    #
+    db_driver <- RJDBC::JDBC(driverClass=config["JDBC_DRIVER_CLASS","VALUE"],
+                             classPath=config["JDBC_CLASSPATH","VALUE"])
+    db_dsn <- sprintf(config["JDBC_DSN_FORMAT","VALUE"],
+                      config["DB_HOST","VALUE"],
+                      config["DB_PORT","VALUE"],
+                      config["DB_NAME","VALUE"])
+    db_conn <- dbConnect(db_driver,
+                         db_dsn,
+                         config["DB_USER","VALUE"],
+                         config["DB_PASSWORD","VALUE"])
+    #
+    # execute flagged data query on all the parameter sets
+    #
+    flagged_records <- exec_flagged_query(param_sets, 
+                                          db_conn, 
+                                          config, 
+                                          options)
+    #
+    # execute not-flagged data query on all the parameter sets
+    #
+    not_flagged_records <- exec_not_flagged_query(param_sets, 
+                                                  db_conn, 
+                                                  config, 
+                                                  options)
+    #
+    # close DB connection
+    #
+    dbDisconnect(db_conn)
+    #
+    # save results
+    #
+    write_results(options,
+                  flagged_records,
+                  not_flagged_records)
+}
+#
+#####################################################################
+#
+# parse command line arguments
+#
+specs <- matrix(c('help', 'h', 0, 'logical',
+                  'chart', 'C', 0, 'logical',
+                  'work', 'w', 1, 'character',
+                  'config', 'c', 1, 'character',
+                  'params', 'p', 1, 'character',
+                  'output', 'o', 1, 'character'),
+                byrow=TRUE, 
+                ncol=4)
+#
+options <- getopt(specs)
+#
+# check if usage message was requested
+#
+if ( ! is.null(options$help)) {
+    usage()
+    q(status=2)
+}
+#
+# set default values
+#
+if (is.null(options$output)) {
+    options$output <- "ida.results.csv"
+}
+if (is.null(options$chart)) {
+    options$chart <- FALSE
+}
+if (is.null(options$params)) {
+    options$params <- "parameters.csv"
+}
+if (is.null(options$config)) {
+    options$config <- "ida.config.csv"
+}
+#
+# change to working directory
+#
+if (is.null(options$work)) {
+    usage()
+    stop("working directory was not given.")
+}
+setwd(options$work)
+#
+# read in config file
+#
+config <- read_csv_file(filename=options$config, 
+                        type_of_file="Configuration")
+#
+# pretty-up the name-value records by assigning the name as the
+# row name.
+#
+rownames(config) <- config[,1]
+#
+# read in parameters file 
+#
+params <- read_csv_file(filename=options$params, 
+                        type_of_file="Parameters")
+#
+# duplicate the patterns column so we have access to the value
+# in the lapply
+#
+# params <- params %>% mutate(PHM_PATTERNS_SK_DUP=PHM_PATTERNS_SK)
+params$PHM_PATTERNS_SK_DUP <- params$PHM_PATTERNS_SK
+#
+# split up the parameter sets by pattern IDs. the list will
+# be passed to lapply to generate the data sets.
+# 
+param_sets <- split(params, list(params$PHM_PATTERNS_SK))
+#
+# generate flagged and not flagged data
+#
+process_time <- system.time({
+    generate_data(param_sets, config, options)
+})
+#
+print(process_time)
+#
+q(status=0)
+
