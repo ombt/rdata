@@ -115,7 +115,6 @@ exec_flagged_query <- function(param_sets, db_conn, config, options)
     #
     query_template <- "
 select
-    v.deviceid,
     v.modulesn,
     avg(v.adcvalue) as mean_adc,
     count(v.adcvalue) as num_readings
@@ -130,7 +129,6 @@ and
 and
     v.vacuumstatename = '%s'
 group by
-    v.deviceid,
     v.modulesn
 having (
     count(v.adcvalue) >= %s
@@ -138,7 +136,6 @@ and
     avg(v.adcvalue) <= %s
 )
 order by
-    v.deviceid,
     v.modulesn"
     #
     flagged <- "Y"
@@ -161,7 +158,6 @@ exec_not_flagged_query <- function(param_sets, db_conn, config, options)
     #
     query_template <- "
 select
-    v.deviceid,
     v.modulesn,
     avg(v.adcvalue) as mean_adc,
     count(v.adcvalue) as num_readings
@@ -176,7 +172,6 @@ and
 and
     v.vacuumstatename = '%s'
 group by
-    v.deviceid,
     v.modulesn
 having not (
     count(v.adcvalue) >= %s
@@ -184,7 +179,6 @@ and
     avg(v.adcvalue) <= %s
 )
 order by
-    v.deviceid,
     v.modulesn"
     #
     flagged <- "N"

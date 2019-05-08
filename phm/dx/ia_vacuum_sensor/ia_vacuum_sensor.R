@@ -45,7 +45,6 @@ exec_query <- function(params,
     #
     query_template <- "
 select
-    v.deviceid,
     v.moduleserialnumber as modulesn,
     avg(v.adcvalue) as mean_adc,
     count(v.adcvalue) as num_readings
@@ -58,7 +57,6 @@ and
 and
     v.vacuumstatename = '%s'
 group by
-    v.deviceid,
     v.moduleserialnumber
 having %s (
     count(v.adcvalue) >= %s
@@ -66,7 +64,6 @@ and
     avg(v.adcvalue) <= %s
 )
 order by
-    v.deviceid,
     v.moduleserialnumber"
     #
     query_template <- gsub("[\n\r]"," ", query_template)

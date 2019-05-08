@@ -127,7 +127,6 @@ exec_flagged_query <- function(param_sets, db_conn, config, options)
     #
     query_template <- "
 select
-    dxr.deviceid as deviceid,
     dxr.moduleserialnumber as moduleserialnumber,
     count(dxr.testid) as num_testid,
     max(dxr.integrateddarkcount) as max_idc,
@@ -145,7 +144,6 @@ and
 and
     upper(dxr.moduleserialnumber) like 'AI%%'
 group by
-    dxr.deviceid,
     dxr.moduleserialnumber
 having
     count(dxr.testid) >= %s
@@ -154,7 +152,6 @@ and
 and
     stddev(dxr.integrateddarkcount) >= %s
 order by
-    dxr.deviceid,
     dxr.moduleserialnumber"
     #
     flagged <- "Y"
@@ -177,7 +174,6 @@ exec_not_flagged_query <- function(param_sets, db_conn, config, options)
     #
     query_template <- "
 select
-    dxr.deviceid as deviceid,
     dxr.moduleserialnumber as moduleserialnumber,
     count(dxr.testid) as num_testid,
     max(dxr.integrateddarkcount) as max_idc,
@@ -195,7 +191,6 @@ and
 and
     upper(dxr.moduleserialnumber) like 'AI%%'
 group by
-    dxr.deviceid,
     dxr.moduleserialnumber
 having not (
     count(dxr.testid) >= %s
@@ -205,7 +200,6 @@ and
     stddev(dxr.integrateddarkcount) >= %s
 )
 order by
-    dxr.deviceid,
     dxr.moduleserialnumber"
     #
     flagged <- "N"

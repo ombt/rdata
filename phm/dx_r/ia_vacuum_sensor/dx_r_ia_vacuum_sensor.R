@@ -169,7 +169,6 @@ run_algorithm <- function(param_sets, db_conn, config, options)
     #
     query_template <- "
 select
-    v.deviceid,
     v.moduleserialnumber as modulesn,
     avg(v.adcvalue) as mean_adc,
     count(v.adcvalue) as num_readings
@@ -182,10 +181,8 @@ and
 and
     v.vacuumstatename = '%s'
 group by
-    v.deviceid,
     v.moduleserialnumber
 order by
-    v.deviceid,
     v.moduleserialnumber"
     #
     results <- lapply(param_sets, 

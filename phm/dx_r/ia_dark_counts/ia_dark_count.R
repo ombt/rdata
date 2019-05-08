@@ -186,7 +186,6 @@ run_algorithm <- function(param_sets, db_conn, config, options)
     #
     query_template <- "
 select
-    dxr.deviceid as deviceid,
     dxr.moduleserialnumber as moduleserialnumber,
     count(dxr.testid) as num_testid,
     max(dxr.integrateddarkcount) as max_idc,
@@ -204,10 +203,8 @@ and
 and
     upper(dxr.moduleserialnumber) like 'AI%%'
 group by
-    dxr.deviceid,
     dxr.moduleserialnumber
 order by
-    dxr.deviceid,
     dxr.moduleserialnumber"
     #
     results <- lapply(param_sets, 

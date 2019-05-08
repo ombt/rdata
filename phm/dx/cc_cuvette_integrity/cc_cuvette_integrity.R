@@ -131,7 +131,6 @@ exec_flagged_query <- function(param_sets, db_conn, config, options)
     #
     query_template <- "
 select
-    final2.deviceid,
     final2.moduleserialnumber,
     final2.gt20000_gt20perc_sampevents,
     count(final2.moduleserialnumber) as count_moduleserialnumber
@@ -147,14 +146,12 @@ from (
              end as gt20000_gt20perc_sampevents
     from (
         select
-            inner2.deviceid,
             inner2.moduleserialnumber,
             inner2.cuvettenumber,
             count(inner2.cuvettenumber) as num_sampevents_percuv,
             sum(inner2.check_gt20000) as num_sampevents_gt20000_percuv
         from (
             select
-                sdp.deviceid,
                 sdp.scmserialnumber,
                 sdp.datetimestamplocal,
                 sdp.dispensebeginaverage,
@@ -218,11 +215,9 @@ from (
                 sdp.datetimestamplocal < date_parse('%s', '%%m/%%d/%%Y %%T') 
         ) inner2        
         group by
-            inner2.deviceid,
             inner2.moduleserialnumber,
             inner2.cuvettenumber
         order by
-            inner2.deviceid,
             inner2.moduleserialnumber,
             inner2.cuvettenumber
         ) middle2
@@ -234,13 +229,11 @@ from (
 where
     final2.gt20000_gt20perc_sampevents = %s
 group by
-    final2.deviceid,
     final2.moduleserialnumber,
     final2.gt20000_gt20perc_sampevents
 having
     count(final2.moduleserialnumber) <= %s
 order by
-    final2.deviceid,
     final2.moduleserialnumber,
     final2.gt20000_gt20perc_sampevents"
     #
@@ -264,7 +257,6 @@ exec_not_flagged_query <- function(param_sets, db_conn, config, options)
     #
     query_template <- "
 select
-    final2.deviceid,
     final2.moduleserialnumber,
     final2.gt20000_gt20perc_sampevents,
     count(final2.moduleserialnumber) as count_moduleserialnumber
@@ -280,14 +272,12 @@ from (
              end as gt20000_gt20perc_sampevents
     from (
         select
-            inner2.deviceid,
             inner2.moduleserialnumber,
             inner2.cuvettenumber,
             count(inner2.cuvettenumber) as num_sampevents_percuv,
             sum(inner2.check_gt20000) as num_sampevents_gt20000_percuv
         from (
             select
-                sdp.deviceid,
                 sdp.scmserialnumber,
                 sdp.datetimestamplocal,
                 sdp.dispensebeginaverage,
@@ -351,11 +341,9 @@ from (
                 sdp.datetimestamplocal < date_parse('%s', '%%m/%%d/%%Y %%T') 
         ) inner2        
         group by
-            inner2.deviceid,
             inner2.moduleserialnumber,
             inner2.cuvettenumber
         order by
-            inner2.deviceid,
             inner2.moduleserialnumber,
             inner2.cuvettenumber
         ) middle2
@@ -367,13 +355,11 @@ from (
 where
     not ( final2.gt20000_gt20perc_sampevents = %s )
 group by
-    final2.deviceid,
     final2.moduleserialnumber,
     final2.gt20000_gt20perc_sampevents
 having
     not ( count(final2.moduleserialnumber) <= %s )
 order by
-    final2.deviceid,
     final2.moduleserialnumber,
     final2.gt20000_gt20perc_sampevents"
     #

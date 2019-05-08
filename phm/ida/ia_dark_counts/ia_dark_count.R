@@ -128,7 +128,6 @@ exec_flagged_query <- function(param_sets, db_conn, config, options)
     #
     query_template <- "
 select
-    icqr.deviceid as deviceid,
     icqr.modulesn as modulesn,
     count(icqr.testid) as num_testid,
     max(icqr.integrateddarkcount) as max_idc,
@@ -146,7 +145,6 @@ and
 and
     upper(icqr.modulesn) like 'AI%%'
 group by
-    icqr.deviceid,
     icqr.modulesn
 having
     count(icqr.testid) >= %s
@@ -155,7 +153,6 @@ and
 and
     stddev(icqr.integrateddarkcount) >= %s
 order by
-    icqr.deviceid,
     icqr.modulesn"
     #
     flagged <- "Y"
@@ -178,7 +175,6 @@ exec_not_flagged_query <- function(param_sets, db_conn, config, options)
     #
     query_template <- "
 select
-    icqr.deviceid as deviceid,
     icqr.modulesn as modulesn,
     count(icqr.testid) as num_testid,
     max(icqr.integrateddarkcount) as max_idc,
@@ -196,7 +192,6 @@ and
 and
     upper(icqr.modulesn) like 'AI%%'
 group by
-    icqr.deviceid,
     icqr.modulesn
 having not (
     count(icqr.testid) >= %s
@@ -206,7 +201,6 @@ and
     stddev(icqr.integrateddarkcount) >= %s
 )
 order by
-    icqr.deviceid,
     icqr.modulesn "
     #
     flagged <- "N"

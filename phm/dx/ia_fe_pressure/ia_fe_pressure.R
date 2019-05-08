@@ -117,14 +117,12 @@ exec_flagged_query <- function(param_sets, db_conn, config, options)
     #
     query_template <- "
 select
-    evals.deviceid,
     evals.modulesn,
     evals.mechname,
     evals.aspirations,
     evals.numflags
 from ( 
     select
-        pm.deviceid as deviceid,
         pm.moduleserialnumber as modulesn,
         pm.pipettormechanismname as mechname,
         count(pm.pipettormechanismname) as aspirations,
@@ -146,17 +144,16 @@ from (
     and 
         pm.pipettormechanismname = '%s'
     group by
-        pm.deviceid,
         pm.moduleserialnumber,
         pm.pipettormechanismname
     ) evals
 where (
     evals.aspirations >= %s
 and
-    (evals.numflags / evals.aspirations) >= %s
+    (cast (evals.numflags as double) / 
+     cast (evals.aspirations as double) ) >= %s
 )
 order by
-    evals.deviceid,
     evals.modulesn"
     #
     flagged <- "Y"
@@ -179,14 +176,12 @@ exec_not_flagged_query <- function(param_sets, db_conn, config, options)
     #
     query_template <- "
 select
-    evals.deviceid,
     evals.modulesn,
     evals.mechname,
     evals.aspirations,
     evals.numflags
 from ( 
     select
-        pm.deviceid as deviceid,
         pm.moduleserialnumber as modulesn,
         pm.pipettormechanismname as mechname,
         count(pm.pipettormechanismname) as aspirations,
@@ -208,17 +203,16 @@ from (
     and 
         pm.pipettormechanismname = '%s'
     group by
-        pm.deviceid,
         pm.moduleserialnumber,
         pm.pipettormechanismname
     ) evals
 where not (
     evals.aspirations >= %s
 and
-    (evals.numflags / evals.aspirations) >= %s
+    (cast (evals.numflags as double) / 
+     cast (evals.aspirations as double) ) >= %s
 )
 order by
-    evals.deviceid,
     evals.modulesn"
     #
     flagged <- "N"

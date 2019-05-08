@@ -173,7 +173,6 @@ run_algorithm <- function(param_sets, db_conn, config, options)
     #
     query_template <- "
 select
-    pm.deviceid as deviceid,
     pm.moduleserialnumber as modulesn,
     pm.pipettormechanismname as mechname,
     count(pm.pipettormechanismname) as aspirations,
@@ -195,11 +194,9 @@ and
 and 
     pm.pipettormechanismname = '%s'
 group by
-    pm.deviceid,
     pm.moduleserialnumber,
     pm.pipettormechanismname
 order by
-    pm.deviceid,
     pm.moduleserialnumber,
     pm.pipettormechanismname"
     #
