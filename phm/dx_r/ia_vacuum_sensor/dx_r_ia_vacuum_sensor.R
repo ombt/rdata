@@ -23,6 +23,9 @@ library(dplyr)
 #
 # options(error=dump_and_quit)
 #
+options(max.print=100000)
+options(warning.length = 5000)
+#
 #####################################################################
 #
 # local functions
@@ -89,10 +92,9 @@ exec_query <- function(params,
     #
     # add extra columns required in the output file
     #
-    results$PHN_PATTERNS_SK <- unique(params[ , "PHM_PATTERNS_SK_DUP"])[1]
-    #
     results$FLAG_DATE <- config["START_DATE", 
                                 "VALUE"]
+    results$PHN_PATTERNS_SK <- unique(params[ , "PHM_PATTERNS_SK_DUP"])[1]
     results$IHM_LEVEL3_DESC <- params["IHN_LEVEL3_DESC",
                                       "PARAMETER_VALUE"]
     results$THRESHOLD_DESCRIPTION <- params["THRESHOLDS_DESCRIPTION",

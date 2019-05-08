@@ -85,8 +85,7 @@ exec_query <- function(params,
     #
     results$FLAG_DATE <- config["START_DATE", 
                                 "VALUE"]
-    results$PHN_PATTERNS_SK <- params["TESTID", 
-                                      "PHM_PATTERNS_SK_DUP"]
+    results$PHN_PATTERNS_SK <- unique(params[ , "PHM_PATTERNS_SK_DUP"])[1]
     results$IHM_LEVEL3_DESC <- params["IHN_LEVEL3_DESC",
                                       "PARAMETER_VALUE"]
     results$THRESHOLD_DESCRIPTION <- params["THRESHOLD DESCRIPTION",
