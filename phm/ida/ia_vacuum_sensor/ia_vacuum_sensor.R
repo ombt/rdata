@@ -10,6 +10,9 @@ library(DBI)
 library(RJDBC)
 library(dplyr)
 #
+options(max.print=100000)
+options(warning.length = 5000)
+#
 #####################################################################
 #
 # local functions

@@ -10,6 +10,9 @@ library(DBI)
 library(RJDBC)
 library(dplyr)
 #
+options(max.print=100000)
+options(warning.length = 5000)
+#
 #####################################################################
 #
 # local functions
@@ -62,6 +65,21 @@ exec_query <- function(params,
                             "PARAMETER_VALUE"])
     #
     results <- dbGetQuery(db_conn, query)
+    if (nrow(results) == 0) {
+        #
+        # create an empty data frame with the correct columns
+        #
+        new_nc <- ncol(results) + 4
+        new_cnms <- c(colnames(results),
+                      "FLAG_DATE",
+                      "PHN_PATTERNS_SK",
+                      "IHM_LEVEL3_DESC",
+                      "THRESHOLDS_DESCRIPTION")
+        empty_results <- data.frame(matrix(ncol=new_nc, nrow=0))
+        colnames(empty_results) <- new_cnms
+        #
+        return(empty_results)
+    }
     #
     # add extra columns required in the output file
     #
