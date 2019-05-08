@@ -57,7 +57,10 @@ exec_query <- function(params,
                      params["I_VACUUM_NUMREADINGS_MIN", "PARAMETER_VALUE"],
                      params["I_VACUUM_MEANADC_MIN", "PARAMETER_VALUE"])
     #
-    results <- dbGetQuery(db_conn, query)
+    query_time <- system.time({
+        results <- dbGetQuery(db_conn, query)
+    })
+    print(query_time)
     if (nrow(results) == 0) {
         #
         # create an empty data frame with the correct columns

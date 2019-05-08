@@ -73,7 +73,10 @@ exec_query <- function(params,
                      params["THRESHOLDS_COUNT", 
                             "PARAMETER_VALUE"])
     #
-    results <- dbGetQuery(db_conn, query)
+    query_time <- system.time({
+        results <- dbGetQuery(db_conn, query)
+    })
+    print(query_time)
     #
     # check if anything was found
     #

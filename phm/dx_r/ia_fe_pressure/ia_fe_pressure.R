@@ -72,7 +72,10 @@ exec_query <- function(params,
                      config["END_DATE", "VALUE"],
                      params["PIPMECHNAME", "PARAMETER_VALUE"])
     #
-    results <- dbGetQuery(db_conn, query)
+    query_time <- system.time({
+        results <- dbGetQuery(db_conn, query)
+    })
+    print(query_time)
     #
     # check if anything was found
     #
