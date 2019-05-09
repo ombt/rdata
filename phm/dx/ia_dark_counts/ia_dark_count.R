@@ -153,15 +153,15 @@ select
 from
     dx.dx_205_result dxr
 where
-    date_parse('<START_DATE>', '%%m/%%d/%%Y %%T') <= dxr.datetimestamplocal
+    date_parse('<START_DATE>', '%m/%d/%Y %T') <= dxr.datetimestamplocal
 and 
-    dxr.datetimestamplocal < date_parse('<END_DATE>', '%%m/%%d/%%Y %%T') 
+    dxr.datetimestamplocal < date_parse('<END_DATE>', '%m/%d/%Y %T') 
 and
     dxr.integrateddarkcount is not null
 and
     dxr.integrateddarkcount >= <THRESHOLDS_COUNT>
 and
-    upper(dxr.moduleserialnumber) like 'AI%%'
+    upper(dxr.moduleserialnumber) like 'AI%'
 group by
     dxr.moduleserialnumber
 having
@@ -200,15 +200,15 @@ select
 from
     dx.dx_205_result dxr
 where
-    date_parse('<START_DATE>', '%%m/%%d/%%Y %%T') <= dxr.datetimestamplocal
+    date_parse('<START_DATE>', '%m/%d/%Y %T') <= dxr.datetimestamplocal
 and 
-    dxr.datetimestamplocal < date_parse('<END_DATE>', '%%m/%%d/%%Y %%T') 
+    dxr.datetimestamplocal < date_parse('<END_DATE>', '%m/%d/%Y %T') 
 and
     dxr.integrateddarkcount is not null
 and
     dxr.integrateddarkcount >= <THRESHOLDS_COUNT>
 and
-    upper(dxr.moduleserialnumber) like 'AI%%'
+    upper(dxr.moduleserialnumber) like 'AI%'
 group by
     dxr.moduleserialnumber
 having not (

@@ -145,9 +145,9 @@ from (
     from
         dx.dx_205_pmevent pm
     where
-        date_parse('<START_DATE>', '%%m/%%d/%%Y %%T') <= pm.datetimestamplocal
+        date_parse('<START_DATE>', '%m/%d/%Y %T') <= pm.datetimestamplocal
     and 
-        pm.datetimestamplocal < date_parse('<END_DATE>', '%%m/%%d/%%Y %%T') 
+        pm.datetimestamplocal < date_parse('<END_DATE>', '%m/%d/%Y %T') 
     and 
         pm.frontendpressure is not null
     and 
@@ -204,9 +204,9 @@ from (
     from
         dx.dx_205_pmevent pm
     where
-        date_parse('<START_DATE', '%%m/%%d/%%Y %%T') <= pm.datetimestamplocal
+        date_parse('<START_DATE', '%m/%d/%Y %T') <= pm.datetimestamplocal
     and 
-        pm.datetimestamplocal < date_parse('<END_DATE>', '%%m/%%d/%%Y %%T') 
+        pm.datetimestamplocal < date_parse('<END_DATE>', '%m/%d/%Y %T') 
     and 
         pm.frontendpressure is not null
     and 

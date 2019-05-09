@@ -67,9 +67,9 @@ select
 from 
     dx.dx_205_vacuumpressuredata v
 where
-    date_parse('<START_DATE>', '%%m/%%d/%%Y %%T') <= v.datetimestamplocal
+    date_parse('<START_DATE>', '%m/%d/%Y %T') <= v.datetimestamplocal
 and 
-    v.datetimestamplocal < date_parse('<END_DATE>', '%%m/%%d/%%Y %%T') 
+    v.datetimestamplocal < date_parse('<END_DATE>', '%m/%d/%Y %T') 
 and
     v.vacuumstatename = '<I_VACUUM_VACSTNAME>'
 group by

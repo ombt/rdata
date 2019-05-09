@@ -197,9 +197,9 @@ from (
             left join 
                 dx.dx_210_ccdispensepm dpm
             on 
-                date_parse('%s', '%%m/%%d/%%Y %%T') <= dpm.datetimestamplocal
+                date_parse('%s', '%m/%d/%Y %T') <= dpm.datetimestamplocal
             and 
-                dpm.datetimestamplocal < date_parse('%s', '%%m/%%d/%%Y %%T') 
+                dpm.datetimestamplocal < date_parse('%s', '%m/%d/%Y %T') 
             and
                 sdp.scmserialnumber = dpm.scmserialnumber
             and 
@@ -219,17 +219,17 @@ from (
             left join 
                 dx.dx_210_result r
             on 
-                date_parse('%s', '%%m/%%d/%%Y %%T') <= r.datetimestamplocal
+                date_parse('%s', '%m/%d/%Y %T') <= r.datetimestamplocal
             and 
-                r.datetimestamplocal < date_parse('%s', '%%m/%%d/%%Y %%T') 
+                r.datetimestamplocal < date_parse('%s', '%m/%d/%Y %T') 
             and
                 dpm.scmserialnumber = r.scmserialnumber
             and 
                 dpm.testid = r.testid
             where
-                date_parse('%s', '%%m/%%d/%%Y %%T') <= sdp.datetimestamplocal
+                date_parse('%s', '%m/%d/%Y %T') <= sdp.datetimestamplocal
             and 
-                sdp.datetimestamplocal < date_parse('%s', '%%m/%%d/%%Y %%T') 
+                sdp.datetimestamplocal < date_parse('%s', '%m/%d/%Y %T') 
             and 
                 r.cuvettenumber is not null
         ) inner1    
@@ -319,9 +319,9 @@ from (
             left join 
                 dx.dx_210_ccdispensepm dpm
             on 
-                date_parse('%s', '%%m/%%d/%%Y %%T') <= dpm.datetimestamplocal
+                date_parse('%s', '%m/%d/%Y %T') <= dpm.datetimestamplocal
             and 
-                dpm.datetimestamplocal < date_parse('%s', '%%m/%%d/%%Y %%T') 
+                dpm.datetimestamplocal < date_parse('%s', '%m/%d/%Y %T') 
             and
                 sdp.scmserialnumber = dpm.scmserialnumber
             and 
@@ -341,9 +341,9 @@ from (
             left join 
                 dx.dx_210_result r
             on 
-                date_parse('%s', '%%m/%%d/%%Y %%T') <= r.datetimestamplocal
+                date_parse('%s', '%m/%d/%Y %T') <= r.datetimestamplocal
             and 
-                r.datetimestamplocal < date_parse('%s', '%%m/%%d/%%Y %%T') 
+                r.datetimestamplocal < date_parse('%s', '%m/%d/%Y %T') 
             and
                 dpm.scmserialnumber = r.scmserialnumber
             and 
@@ -351,9 +351,9 @@ from (
             and 
                 r.cuvettenumber is not null
             where
-                date_parse('%s', '%%m/%%d/%%Y %%T') <= sdp.datetimestamplocal
+                date_parse('%s', '%m/%d/%Y %T') <= sdp.datetimestamplocal
             and 
-                sdp.datetimestamplocal < date_parse('%s', '%%m/%%d/%%Y %%T') 
+                sdp.datetimestamplocal < date_parse('%s', '%m/%d/%Y %T') 
         ) inner2        
         group by
             inner2.moduleserialnumber,
