@@ -35,6 +35,22 @@ read_csv_file <- function(filename, type_of_file)
     return(read.csv(filename, stringsAsFactors=FALSE))
 }
 #
+query_subs <- function(query_template, substitutions, value_column_name)
+{
+    query <- query_template
+    #
+    if (nrow(substitutions) > 0) {
+        for (rownm in rownames(substitutions)) {
+            query <- gsub(sprintf("<%s>", rownm),
+                          substitutions[rownm, value_column_name],
+                          query,
+                          fixed = TRUE)
+        }
+    }
+    #
+    return(query)
+}
+#
 exec_query <- function(params, 
                        db_conn, 
                        query_template, 
@@ -50,12 +66,8 @@ exec_query <- function(params,
     #
     # substitute values into query
     #
-    query <- sprintf(query_template, 
-                     config["START_DATE", "VALUE"],
-                     config["END_DATE", "VALUE"],
-                     params["I_VACUUM_VACSTNAME", "PARAMETER_VALUE"],
-                     params["I_VACUUM_NUMREADINGS_MIN", "PARAMETER_VALUE"],
-                     params["I_VACUUM_MEANADC_MIN", "PARAMETER_VALUE"])
+    query <- query_subs(query_template, config, "VALUE")
+    query <- query_subs(query, params, "PARAMETER_VALUE")
     #
     query_time <- system.time({
         results <- dbGetQuery(db_conn, query)
@@ -121,19 +133,19 @@ select
 from 
     idaqowner.icq_vacuumpressuredata v
 where
-    to_timestamp('%s', 
+    to_timestamp('<START_DATE>', 
                  'MM/DD/YYYY HH24:MI:SS') <= v.logdate_local
 and 
-    v.logdate_local < to_timestamp('%s', 
+    v.logdate_local < to_timestamp('<END_DATE>', 
                                    'MM/DD/YYYY HH24:MI:SS')
 and
-    v.vacuumstatename = '%s'
+    v.vacuumstatename = '<I_VACUUM_VACSTNAME>'
 group by
     v.modulesn
 having (
-    count(v.adcvalue) >= %s
+    count(v.adcvalue) >= <I_VACUUM_NUMREADINGS_MIN>
 and 
-    avg(v.adcvalue) <= %s
+    avg(v.adcvalue) <= <I_VACUUM_MEANADC_MIN>
 )
 order by
     v.modulesn"
@@ -164,19 +176,19 @@ select
 from 
     idaqowner.icq_vacuumpressuredata v
 where
-    to_timestamp('%s', 
+    to_timestamp('<START_DATE>', 
                  'MM/DD/YYYY HH24:MI:SS') <= v.logdate_local
 and 
-    v.logdate_local < to_timestamp('%s', 
+    v.logdate_local < to_timestamp('<END_DATE>', 
                                    'MM/DD/YYYY HH24:MI:SS')
 and
-    v.vacuumstatename = '%s'
+    v.vacuumstatename = '<I_VACUUM_VACSTNAME>'
 group by
     v.modulesn
 having not (
-    count(v.adcvalue) >= %s
+    count(v.adcvalue) >= <I_VACUUM_NUMREADINGS_MIN>
 and 
-    avg(v.adcvalue) <= %s
+    avg(v.adcvalue) <= <I_VACUUM_MEANADC_MIN>
 )
 order by
     v.modulesn"

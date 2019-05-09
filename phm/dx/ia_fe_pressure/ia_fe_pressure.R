@@ -35,6 +35,22 @@ read_csv_file <- function(filename, type_of_file)
     return(read.csv(filename, stringsAsFactors=FALSE))
 }
 #
+query_subs <- function(query_template, substitutions, value_column_name)
+{
+    query <- query_template
+    #
+    if (nrow(substitutions) > 0) {
+        for (rownm in rownames(substitutions)) {
+            query <- gsub(sprintf("<%s>", rownm),
+                          substitutions[rownm, value_column_name],
+                          query,
+                          fixed = TRUE)
+        }
+    }
+    #
+    return(query)
+}
+#
 exec_query <- function(params, 
                        db_conn, 
                        query_template, 
@@ -50,19 +66,14 @@ exec_query <- function(params,
     #
     # substitute values into query
     #
-    query <- sprintf(query_template, 
-                     params["MAX_VALUE", "PARAMETER_VALUE"],
-                     params["MIN_VALUE", "PARAMETER_VALUE"],
-                     config["START_DATE", "VALUE"],
-                     config["END_DATE", "VALUE"],
-                     params["PIPMECHNAME", "PARAMETER_VALUE"],
-                     params["ASPS", "PARAMETER_VALUE"],
-                     params["PCTASPS", "PARAMETER_VALUE"])
+    query <- query_subs(query_template, config, "VALUE")
+    query <- query_subs(query, params, "PARAMETER_VALUE")
     #
     query_time <- system.time({
         results <- dbGetQuery(db_conn, query)
     })
     print(query_time)
+    #
     if (nrow(results) == 0) {
         #
         # create an empty data frame with the correct columns
@@ -126,32 +137,32 @@ from (
         pm.moduleserialnumber as modulesn,
         pm.pipettormechanismname as mechname,
         count(pm.pipettormechanismname) as aspirations,
-        sum(case when pm.frontendpressure > %s or 
-                      pm.frontendpressure < %s
+        sum(case when pm.frontendpressure > <MAX_VALUE> or 
+                      pm.frontendpressure < <MIN_VALUE>
                  then 1
                  else 0
             end) as numflags
     from
         dx.dx_205_pmevent pm
     where
-        date_parse('%s', '%%m/%%d/%%Y %%T') <= pm.datetimestamplocal
+        date_parse('<START_DATE>', '%%m/%%d/%%Y %%T') <= pm.datetimestamplocal
     and 
-        pm.datetimestamplocal < date_parse('%s', '%%m/%%d/%%Y %%T') 
+        pm.datetimestamplocal < date_parse('<END_DATE>', '%%m/%%d/%%Y %%T') 
     and 
         pm.frontendpressure is not null
     and 
         pm.pipettingprotocolname != 'NonPipettingProtocol'
     and 
-        pm.pipettormechanismname = '%s'
+        pm.pipettormechanismname = '<PIPMECHNAME>'
     group by
         pm.moduleserialnumber,
         pm.pipettormechanismname
     ) evals
 where (
-    evals.aspirations >= %s
+    evals.aspirations >= <ASPS>
 and
     (cast (evals.numflags as double) / 
-     cast (evals.aspirations as double) ) >= %s
+     cast (evals.aspirations as double) ) >= <PCTASPS>
 )
 order by
     evals.modulesn"
@@ -185,32 +196,32 @@ from (
         pm.moduleserialnumber as modulesn,
         pm.pipettormechanismname as mechname,
         count(pm.pipettormechanismname) as aspirations,
-        sum(case when pm.frontendpressure > %s or 
-                      pm.frontendpressure < %s
+        sum(case when pm.frontendpressure > <MAX_VALUE> or 
+                      pm.frontendpressure < <MIN_VALUE>
                  then 1
                  else 0
             end) as numflags
     from
         dx.dx_205_pmevent pm
     where
-        date_parse('%s', '%%m/%%d/%%Y %%T') <= pm.datetimestamplocal
+        date_parse('<START_DATE', '%%m/%%d/%%Y %%T') <= pm.datetimestamplocal
     and 
-        pm.datetimestamplocal < date_parse('%s', '%%m/%%d/%%Y %%T') 
+        pm.datetimestamplocal < date_parse('<END_DATE>', '%%m/%%d/%%Y %%T') 
     and 
         pm.frontendpressure is not null
     and 
         pm.pipettingprotocolname != 'NonPipettingProtocol'
     and 
-        pm.pipettormechanismname = '%s'
+        pm.pipettormechanismname = '<PIPMECHNAME>'
     group by
         pm.moduleserialnumber,
         pm.pipettormechanismname
     ) evals
 where not (
-    evals.aspirations >= %s
+    evals.aspirations >= <ASPS>
 and
     (cast (evals.numflags as double) / 
-     cast (evals.aspirations as double) ) >= %s
+     cast (evals.aspirations as double) ) >= <PCTASPS>
 )
 order by
     evals.modulesn"
@@ -336,7 +347,7 @@ if (is.null(options$chart)) {
     options$chart <- FALSE
 }
 if (is.null(options$params)) {
-    options$config <- "params.csv"
+    options$params <- "parameters.csv"
 }
 if (is.null(options$config)) {
     options$config <- file.path(path.expand("~"),

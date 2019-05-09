@@ -35,6 +35,22 @@ read_csv_file <- function(filename, type_of_file)
     return(read.csv(filename, stringsAsFactors=FALSE))
 }
 #
+query_subs <- function(query_template, substitutions, value_column_name)
+{
+    query <- query_template
+    #
+    if (nrow(substitutions) > 0) {
+        for (rownm in rownames(substitutions)) {
+            query <- gsub(sprintf("<%s>", rownm),
+                          substitutions[rownm, value_column_name],
+                          query,
+                          fixed = TRUE)
+        }
+    }
+    #
+    return(query)
+}
+#
 exec_query <- function(params, 
                        db_conn, 
                        query_template, 
@@ -49,6 +65,9 @@ exec_query <- function(params,
     rownames(params) <- params[,"PARAMETER_NAME"]
     #
     # substitute values into query
+    #
+    query <- query_subs(query_template, config, "VALUE")
+    query <- query_subs(query, params, "PARAMETER_VALUE")
     #
     query <- sprintf(query_template, 
                      params["CUVETTEINTEGRITY_PERCSAMPEVENTS_MIN",

@@ -35,6 +35,22 @@ read_csv_file <- function(filename, type_of_file)
     return(read.csv(filename, stringsAsFactors=FALSE))
 }
 #
+query_subs <- function(query_template, substitutions, value_column_name)
+{
+    query <- query_template
+    #
+    if (nrow(substitutions) > 0) {
+        for (rownm in rownames(substitutions)) {
+            query <- gsub(sprintf("<%s>", rownm),
+                          substitutions[rownm, value_column_name],
+                          query,
+                          fixed = TRUE)
+        }
+    }
+    #
+    return(query)
+}
+#
 exec_query <- function(params, 
                        db_conn, 
                        query_template, 

@@ -35,6 +35,22 @@ read_csv_file <- function(filename, type_of_file)
     return(read.csv(filename, stringsAsFactors=FALSE))
 }
 #
+query_subs <- function(query_template, substitutions, value_column_name)
+{
+    query <- query_template
+    #
+    if (nrow(substitutions) > 0) {
+        for (rownm in rownames(substitutions)) {
+            query <- gsub(sprintf("<%s>", rownm),
+                          substitutions[rownm, value_column_name],
+                          query,
+                          fixed = TRUE)
+        }
+    }
+    #
+    return(query)
+}
+#
 exec_query <- function(params, 
                        db_conn, 
                        query_template, 
@@ -49,6 +65,9 @@ exec_query <- function(params,
     rownames(params) <- params[,"PARAMETER_NAME"]
     #
     # substitute values into query
+    #
+    query <- query_subs(query_template, config, "VALUE")
+    query <- query_subs(query, params, "PARAMETER_VALUE")
     #
     query <- sprintf(query_template, 
                      config["START_DATE",
@@ -134,23 +153,23 @@ select
 from
     dx.dx_205_result dxr
 where
-    date_parse('%s', '%%m/%%d/%%Y %%T') <= dxr.datetimestamplocal
+    date_parse('<START_DATE>', '%%m/%%d/%%Y %%T') <= dxr.datetimestamplocal
 and 
-    dxr.datetimestamplocal < date_parse('%s', '%%m/%%d/%%Y %%T') 
+    dxr.datetimestamplocal < date_parse('<END_DATE>', '%%m/%%d/%%Y %%T') 
 and
     dxr.integrateddarkcount is not null
 and
-    dxr.integrateddarkcount >= %s
+    dxr.integrateddarkcount >= <THRESHOLDS_COUNT>
 and
     upper(dxr.moduleserialnumber) like 'AI%%'
 group by
     dxr.moduleserialnumber
 having
-    count(dxr.testid) >= %s
+    count(dxr.testid) >= <TESTID>
 and
-    max(dxr.integrateddarkcount) >= %s
+    max(dxr.integrateddarkcount) >= <INTEGRATEDDARKCOUNT_MAX>
 and
-    stddev(dxr.integrateddarkcount) >= %s
+    stddev(dxr.integrateddarkcount) >= <INTEGRATEDDARKCOUNT_SD>
 order by
     dxr.moduleserialnumber"
     #
@@ -181,13 +200,13 @@ select
 from
     dx.dx_205_result dxr
 where
-    date_parse('%s', '%%m/%%d/%%Y %%T') <= dxr.datetimestamplocal
+    date_parse('<START_DATE>', '%%m/%%d/%%Y %%T') <= dxr.datetimestamplocal
 and 
-    dxr.datetimestamplocal < date_parse('%s', '%%m/%%d/%%Y %%T') 
+    dxr.datetimestamplocal < date_parse('<END_DATE>', '%%m/%%d/%%Y %%T') 
 and
     dxr.integrateddarkcount is not null
 and
-    dxr.integrateddarkcount >= %s
+    dxr.integrateddarkcount >= <THRESHOLDS_COUNT>
 and
     upper(dxr.moduleserialnumber) like 'AI%%'
 group by
@@ -195,9 +214,9 @@ group by
 having not (
     count(dxr.testid) >= %s
 and
-    max(dxr.integrateddarkcount) >= %s
+    max(dxr.integrateddarkcount) >= <INTEGRATEDDARKCOUNT_MAX>
 and
-    stddev(dxr.integrateddarkcount) >= %s
+    stddev(dxr.integrateddarkcount) >= <INTEGRATEDDARKCOUNT_SD>
 )
 order by
     dxr.moduleserialnumber"
@@ -222,18 +241,7 @@ write_results <- function(options,
     append <- FALSE
     col.names <- TRUE
     #
-    for (record in flagged_records) {
-        write.table(record, 
-                    file=options$output, 
-                    append=append,
-                    row.names=FALSE,
-                    col.names=col.names,
-                    sep=",")
-        append <- TRUE
-        col.names <- FALSE
-    }
-    #
-    for (record in not_flagged_records) {
+    for (record in rbind(flagged_records, not_flagged_records)) {
         write.table(record, 
                     file=options$output, 
                     append=append,

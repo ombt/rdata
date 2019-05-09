@@ -10,6 +10,9 @@ library(DBI)
 library(RJDBC)
 library(dplyr)
 #
+options(max.print=100000)
+options(warning.length = 5000)
+#
 #####################################################################
 #
 # local functions
@@ -32,6 +35,22 @@ read_csv_file <- function(filename, type_of_file)
     return(read.csv(filename, stringsAsFactors=FALSE))
 }
 #
+query_subs <- function(query_template, substitutions, value_column_name)
+{
+    query <- query_template
+    #
+    if (nrow(substitutions) > 0) {
+        for (rownm in rownames(substitutions)) {
+            query <- gsub(sprintf("<%s>", rownm),
+                          substitutions[rownm, value_column_name],
+                          query,
+                          fixed = TRUE)
+        }
+    }
+    #
+    return(query)
+}
+#
 exec_query <- function(params, 
                        db_conn, 
                        query_template, 
@@ -47,14 +66,8 @@ exec_query <- function(params,
     #
     # substitute values into query
     #
-    query <- sprintf(query_template, 
-                     params["MAX_VALUE", "PARAMETER_VALUE"],
-                     params["MIN_VALUE", "PARAMETER_VALUE"],
-                     config["START_DATE", "VALUE"],
-                     config["END_DATE", "VALUE"],
-                     params["PIPMECHNAME", "PARAMETER_VALUE"],
-                     params["ASPS", "PARAMETER_VALUE"],
-                     params["PCTASPS", "PARAMETER_VALUE"])
+    query <- query_subs(query_template, config, "VALUE")
+    query <- query_subs(query, params, "PARAMETER_VALUE")
     #
     query_time <- system.time({
         results <- dbGetQuery(db_conn, query)
@@ -81,8 +94,7 @@ exec_query <- function(params,
     #
     results$FLAG_DATE <- config["START_DATE", 
                                 "VALUE"]
-    results$PHN_PATTERNS_SK <- params["ASPS", 
-                                      "PHM_PATTERNS_SK_DUP"]
+    results$PHN_PATTERNS_SK <- unique(params[ , "PHM_PATTERNS_SK_DUP"])[1]
     results$IHM_LEVEL3_DESC <- params["IHN_LEVEL3_DESC",
                                       "PARAMETER_VALUE"]
     results$THRESHOLD_DESCRIPTION <- params["THRESHOLDS_DESCRIPTION",
@@ -125,33 +137,33 @@ from (
         pm.modulesn,
         pm.pipettormechanismname as mechname,
         count(pm.pipettormechanismname) as aspirations,
-        sum(case when pm.frontendpressure > %s or 
-                      pm.frontendpressure < %s
+        sum(case when pm.frontendpressure > <MAX_VALUE> or 
+                      pm.frontendpressure < <MIN_VALUE>
                  then 1
                  else 0
                  end) as numflags
     from
         idaqowner.icq_pmevents pm
     where
-        to_timestamp('%s', 
+        to_timestamp('<START_DATE>', 
                      'MM/DD/YYYY HH24:MI:SS') <= pm.logdate_local
     and 
-        pm.logdate_local < to_timestamp('%s', 
+        pm.logdate_local < to_timestamp('<END_DATE>', 
                                         'MM/DD/YYYY HH24:MI:SS')
     and 
         pm.frontendpressure is not null
     and 
         pm.pipettingprotocolname != 'NonPipettingProtocol'
     and 
-        pm.pipettormechanismname = '%s'
+        pm.pipettormechanismname = '<PIPMECHNAME>'
     group by
         pm.modulesn,
         pm.pipettormechanismname
     ) evals
 where (
-    evals.aspirations >= %s
+    evals.aspirations >= <ASPS>
 and
-    (evals.numflags / evals.aspirations) >= %s
+    (evals.numflags / evals.aspirations) >= <PCTASPS>
 )
 order by
     evals.modulesn"
@@ -185,33 +197,33 @@ from (
         pm.modulesn,
         pm.pipettormechanismname as mechname,
         count(pm.pipettormechanismname) as aspirations,
-        sum(case when pm.frontendpressure > %s or 
-                      pm.frontendpressure < %s
+        sum(case when pm.frontendpressure > <MAX_VALUE> or 
+                      pm.frontendpressure < <MIN_VALUE>
                  then 1
                  else 0
                  end) as numflags
     from
         idaqowner.icq_pmevents pm
     where
-        to_timestamp('%s', 
+        to_timestamp('<START_DATE>', 
                      'MM/DD/YYYY HH24:MI:SS') <= pm.logdate_local
     and 
-        pm.logdate_local < to_timestamp('%s', 
+        pm.logdate_local < to_timestamp('<END_DATE>', 
                                         'MM/DD/YYYY HH24:MI:SS')
     and 
         pm.frontendpressure is not null
     and 
         pm.pipettingprotocolname != 'NonPipettingProtocol'
     and 
-        pm.pipettormechanismname = '%s'
+        pm.pipettormechanismname = '<PIPMECHNAME>'
     group by
         pm.modulesn,
         pm.pipettormechanismname
     ) evals
 where not (
-    evals.aspirations >= %s
+    evals.aspirations >= <ASPS>
 and
-    (evals.numflags / evals.aspirations) >= %s
+    (evals.numflags / evals.aspirations) >= <PCTASPS>
 )
 order by
     evals.modulesn"

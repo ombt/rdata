@@ -35,6 +35,22 @@ read_csv_file <- function(filename, type_of_file)
     return(read.csv(filename, stringsAsFactors=FALSE))
 }
 #
+query_subs <- function(query_template, substitutions, value_column_name)
+{
+    query <- query_template
+    #
+    if (nrow(substitutions) > 0) {
+        for (rownm in rownames(substitutions)) {
+            query <- gsub(sprintf("<%s>", rownm),
+                          substitutions[rownm, value_column_name],
+                          query,
+                          fixed = TRUE)
+        }
+    }
+    #
+    return(query)
+}
+#
 exec_query <- function(params, 
                        db_conn, 
                        query_template, 
@@ -50,24 +66,14 @@ exec_query <- function(params,
     #
     # substitute values into query
     #
-    query <- sprintf(query_template, 
-                     config["START_DATE",
-                            "VALUE"],
-                     config["END_DATE",
-                            "VALUE"],
-                     params["THRESHOLDS_COUNT", 
-                            "PARAMETER_VALUE"],
-                     params["TESTID", 
-                            "PARAMETER_VALUE"],
-                     params["INTEGRATEDDARKCOUNT_MAX", 
-                            "PARAMETER_VALUE"],
-                     params["INTEGRATEDDARKCOUNT_SD", 
-                            "PARAMETER_VALUE"])
+    query <- query_subs(query_template, config, "VALUE")
+    query <- query_subs(query, params, "PARAMETER_VALUE")
     #
     query_time <- system.time({
         results <- dbGetQuery(db_conn, query)
     })
     print(query_time)
+    #
     if (nrow(results) == 0) {
         #
         # create an empty data frame with the correct columns
@@ -88,8 +94,7 @@ exec_query <- function(params,
     #
     results$FLAG_DATE <- config["START_DATE", 
                                 "VALUE"]
-    results$PHN_PATTERNS_SK <- params["TESTID", 
-                                      "PHM_PATTERNS_SK_DUP"]
+    results$PHN_PATTERNS_SK <- unique(params[ , "PHM_PATTERNS_SK_DUP"])[1]
     results$IHM_LEVEL3_DESC <- params["IHN_LEVEL3_DESC",
                                       "PARAMETER_VALUE"]
     results$THRESHOLD_DESCRIPTION <- params["THRESHOLD DESCRIPTION",
@@ -135,23 +140,23 @@ select
 from
      idaqowner.icq_results icqr
 where
-    to_timestamp('%s', 'MM/DD/YYYY HH24:MI:SS') <= icqr.logdate_local
+    to_timestamp('<START_DATE>', 'MM/DD/YYYY HH24:MI:SS') <= icqr.logdate_local
 and 
-    icqr.logdate_local < to_timestamp('%s', 'MM/DD/YYYY HH24:MI:SS')
+    icqr.logdate_local < to_timestamp('<END_DATE>', 'MM/DD/YYYY HH24:MI:SS')
 and
     icqr.integrateddarkcount is not null
 and
-    icqr.integrateddarkcount >= %s
+    icqr.integrateddarkcount >= <THRESHOLDS_COUNT>
 and
     upper(icqr.modulesn) like 'AI%%'
 group by
     icqr.modulesn
 having
-    count(icqr.testid) >= %s
+    count(icqr.testid) >= <TESTID>
 and
-    max(icqr.integrateddarkcount) >= %s
+    max(icqr.integrateddarkcount) >= <INTEGRATEDDARKCOUNT_MAX>
 and
-    stddev(icqr.integrateddarkcount) >= %s
+    stddev(icqr.integrateddarkcount) >= <INTEGRATEDDARKCOUNT_SD>
 order by
     icqr.modulesn"
     #
@@ -182,26 +187,26 @@ select
 from
      idaqowner.icq_results icqr
 where
-    to_timestamp('%s', 'MM/DD/YYYY HH24:MI:SS') <= icqr.logdate_local
+    to_timestamp('<START_DATE>', 'MM/DD/YYYY HH24:MI:SS') <= icqr.logdate_local
 and 
-    icqr.logdate_local < to_timestamp('%s', 'MM/DD/YYYY HH24:MI:SS')
+    icqr.logdate_local < to_timestamp('<END_DATE>', 'MM/DD/YYYY HH24:MI:SS')
 and
     icqr.integrateddarkcount is not null
 and
-    icqr.integrateddarkcount >= %s
+    icqr.integrateddarkcount >= <THRESHOLDS_COUNT>
 and
     upper(icqr.modulesn) like 'AI%%'
 group by
     icqr.modulesn
 having not (
-    count(icqr.testid) >= %s
+    count(icqr.testid) >= <TESTID>
 and
-    max(icqr.integrateddarkcount) >= %s
+    max(icqr.integrateddarkcount) >= <INTEGRATEDDARKCOUNT_MAX>
 and
-    stddev(icqr.integrateddarkcount) >= %s
+    stddev(icqr.integrateddarkcount) >= <INTEGRATEDDARKCOUNT_SD>
 )
 order by
-    icqr.modulesn "
+    icqr.modulesn"
     #
     flagged <- "N"
     #
@@ -223,18 +228,7 @@ write_results <- function(options,
     append <- FALSE
     col.names <- TRUE
     #
-    for (record in flagged_records) {
-        write.table(record, 
-                    file=options$output, 
-                    append=append,
-                    row.names=FALSE,
-                    col.names=col.names,
-                    sep=",")
-        append <- TRUE
-        col.names <- FALSE
-    }
-    #
-    for (record in not_flagged_records) {
+    for (record in rbind(flagged_records, not_flagged_records)) {
         write.table(record, 
                     file=options$output, 
                     append=append,
