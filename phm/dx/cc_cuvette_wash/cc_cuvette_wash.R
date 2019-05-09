@@ -69,38 +69,11 @@ exec_query <- function(params,
     query <- query_subs(query_template, config, "VALUE")
     query <- query_subs(query, params, "PARAMETER_VALUE")
     #
-    query <- sprintf(query_template, 
-                     params["CUVETTEINTEGRITY_PERCSAMPEVENTS_MIN",
-                            "PARAMETER_VALUE"],
-                     params["CUVETTEINTEGRITY_DISBEGAVG_MIN",
-                            "PARAMETER_VALUE"],
-                     config["START_DATE",
-                            "VALUE"],
-                     config["END_DATE",
-                            "VALUE"],
-                     config["START_DATE",
-                            "VALUE"],
-                     config["END_DATE",
-                            "VALUE"],
-                     config["START_DATE",
-                            "VALUE"],
-                     config["END_DATE",
-                            "VALUE"],
-                     params["CUVETTEINTEGRITY_SAMPEVENTS_MIN",
-                            "PARAMETER_VALUE"],
-                     params["CUVETTEINTEGRITY_SEGMENT1",
-                            "PARAMETER_VALUE"],
-                     params["CUVETTEINTEGRITY_SEGMENT2",
-                            "PARAMETER_VALUE"],
-                     params["THRESHOLDS_COUNT",
-                            "PARAMETER_VALUE"],
-                     params["CUVETTEINTEGRITY_NUMCUVETTES_MAX",
-                            "PARAMETER_VALUE"])
-    #
     query_time <- system.time({
         results <- dbGetQuery(db_conn, query)
     })
     print(query_time)
+    #
     if (nrow(results) == 0) {
         #
         # create an empty data frame with the correct columns
@@ -156,19 +129,17 @@ select
 from (
     select
         middle1.*,
-        (middle1.num_sampevents_gt20000_percuv / 
-         middle1.num_sampevents_percuv) as perc_sampevents_gt20000_percuv,
-        case when (middle1.num_sampevents_gt20000_percuv / 
-                   middle1.num_sampevents_percuv) > %s
+        case when (cast (middle1.num_sampevents_gt20000_percuv as double))/ 
+                  (cast (middle1.num_sampevents_percuv as double)) > <CUVETTEWASH_PERCSAMPEVENTS_MIN>
              then 1
              else 0
              end as gt20000_gt20perc_sampevents
     from (
         select
             inner1.moduleserialnumber,
-            inner2.cuvettenumber,
+            inner1.cuvettenumber,
             count(inner1.cuvettenumber) as num_sampevents_percuv,
-            sum(inner21check_gt20000) as num_sampevents_gt20000_percuv
+            sum(inner1.check_gt20000) as num_sampevents_gt20000_percuv
         from (
             select
                 sdp.scmserialnumber,
@@ -188,7 +159,7 @@ from (
                 r.scmserialnumber,
                 r.testid as results_testid,
                 r.cuvettenumber,
-                case when sdp.dispensebeginaverage > %s
+                case when sdp.dispensebeginaverage > <CUVETTEWASH_DISBEGAVG_MIN>
                      then 1
                      else 0
                      end as check_gt20000
@@ -197,9 +168,9 @@ from (
             left join 
                 dx.dx_210_ccdispensepm dpm
             on 
-                date_parse('%s', '%m/%d/%Y %T') <= dpm.datetimestamplocal
+                date_parse('<START_DATE>', '%m/%d/%Y %T') <= dpm.datetimestamplocal
             and 
-                dpm.datetimestamplocal < date_parse('%s', '%m/%d/%Y %T') 
+                dpm.datetimestamplocal < date_parse('<END_DATE>', '%m/%d/%Y %T') 
             and
                 sdp.scmserialnumber = dpm.scmserialnumber
             and 
@@ -219,20 +190,20 @@ from (
             left join 
                 dx.dx_210_result r
             on 
-                date_parse('%s', '%m/%d/%Y %T') <= r.datetimestamplocal
+                date_parse('<START_DATE>', '%m/%d/%Y %T') <= r.datetimestamplocal
             and 
-                r.datetimestamplocal < date_parse('%s', '%m/%d/%Y %T') 
+                r.datetimestamplocal < date_parse('<END_DATE>', '%m/%d/%Y %T') 
             and
                 dpm.scmserialnumber = r.scmserialnumber
             and 
                 dpm.testid = r.testid
             where
-                date_parse('%s', '%m/%d/%Y %T') <= sdp.datetimestamplocal
+                date_parse('<START_DATE>', '%m/%d/%Y %T') <= sdp.datetimestamplocal
             and 
-                sdp.datetimestamplocal < date_parse('%s', '%m/%d/%Y %T') 
+                sdp.datetimestamplocal < date_parse('<END_DATE>', '%m/%d/%Y %T') 
             and 
                 r.cuvettenumber is not null
-        ) inner1    
+        ) inner1       
         group by
             inner1.moduleserialnumber,
             inner1.cuvettenumber
@@ -242,12 +213,12 @@ from (
         ) middle1
     ) final
 where
-    final.gt20000_gt20perc_sampevents = %s
+    final.gt20000_gt20perc_sampevents = <THRESHOLD_COUNT>
 group by
     final.moduleserialnumber,
     final.gt20000_gt20perc_sampevents
 having
-    count(final2moduleserialnumber) > %s
+    count(final.moduleserialnumber) > <CUVETTEWASH_NUMCUVETTES_MIN>
 order by
     final.moduleserialnumber,
     final.gt20000_gt20perc_sampevents"
@@ -272,25 +243,23 @@ exec_not_flagged_query <- function(param_sets, db_conn, config, options)
     #
     query_template <- "
 select
-    final2.moduleserialnumber,
-    final2.gt20000_gt20perc_sampevents,
-    count(final2.moduleserialnumber) as count_moduleserialnumber
+    final.moduleserialnumber,
+    final.gt20000_gt20perc_sampevents,
+    count(final.moduleserialnumber) as count_moduleserialnumber
 from (
     select
-        middle2.*,
-        (middle2.num_sampevents_gt20000_percuv / 
-         middle2.num_sampevents_percuv) as perc_sampevents_gt20000_percuv,
-        case when (middle2.num_sampevents_gt20000_percuv / 
-                   middle2.num_sampevents_percuv) > %s
+        middle1.*,
+        case when (cast (middle1.num_sampevents_gt20000_percuv as double))/ 
+                  (cast (middle1.num_sampevents_percuv as double)) > <CUVETTEWASH_PERCSAMPEVENTS_MIN>
              then 1
              else 0
              end as gt20000_gt20perc_sampevents
     from (
         select
-            inner2.moduleserialnumber,
-            inner2.cuvettenumber,
-            count(inner2.cuvettenumber) as num_sampevents_percuv,
-            sum(inner2.check_gt20000) as num_sampevents_gt20000_percuv
+            inner1.moduleserialnumber,
+            inner1.cuvettenumber,
+            count(inner1.cuvettenumber) as num_sampevents_percuv,
+            sum(inner1.check_gt20000) as num_sampevents_gt20000_percuv
         from (
             select
                 sdp.scmserialnumber,
@@ -310,7 +279,7 @@ from (
                 r.scmserialnumber,
                 r.testid as results_testid,
                 r.cuvettenumber,
-                case when sdp.dispensebeginaverage > %s
+                case when sdp.dispensebeginaverage > <CUVETTEWASH_DISBEGAVG_MIN>
                      then 1
                      else 0
                      end as check_gt20000
@@ -319,9 +288,9 @@ from (
             left join 
                 dx.dx_210_ccdispensepm dpm
             on 
-                date_parse('%s', '%m/%d/%Y %T') <= dpm.datetimestamplocal
+                date_parse('<START_DATE>', '%m/%d/%Y %T') <= dpm.datetimestamplocal
             and 
-                dpm.datetimestamplocal < date_parse('%s', '%m/%d/%Y %T') 
+                dpm.datetimestamplocal < date_parse('<END_DATE>', '%m/%d/%Y %T') 
             and
                 sdp.scmserialnumber = dpm.scmserialnumber
             and 
@@ -341,42 +310,38 @@ from (
             left join 
                 dx.dx_210_result r
             on 
-                date_parse('%s', '%m/%d/%Y %T') <= r.datetimestamplocal
+                date_parse('<START_DATE>', '%m/%d/%Y %T') <= r.datetimestamplocal
             and 
-                r.datetimestamplocal < date_parse('%s', '%m/%d/%Y %T') 
+                r.datetimestamplocal < date_parse('<END_DATE>', '%m/%d/%Y %T') 
             and
                 dpm.scmserialnumber = r.scmserialnumber
             and 
                 dpm.testid = r.testid
+            where
+                date_parse('<START_DATE>', '%m/%d/%Y %T') <= sdp.datetimestamplocal
+            and 
+                sdp.datetimestamplocal < date_parse('<END_DATE>', '%m/%d/%Y %T') 
             and 
                 r.cuvettenumber is not null
-            where
-                date_parse('%s', '%m/%d/%Y %T') <= sdp.datetimestamplocal
-            and 
-                sdp.datetimestamplocal < date_parse('%s', '%m/%d/%Y %T') 
-        ) inner2        
+        ) inner1        
         group by
-            inner2.moduleserialnumber,
-            inner2.cuvettenumber
+            inner1.moduleserialnumber,
+            inner1.cuvettenumber
         order by
-            inner2.moduleserialnumber,
-            inner2.cuvettenumber
-        ) middle2
-    where
-        not ( middle2.num_sampevents_percuv > %s )
-    and 
-        middle2.cuvettenumber between %s and %s
-    ) final2
+            inner1.moduleserialnumber,
+            inner1.cuvettenumber
+        ) middle1
+    ) final
 where
-    not ( final2.gt20000_gt20perc_sampevents = %s )
+    not ( final.gt20000_gt20perc_sampevents = <THRESHOLD_COUNT> )
 group by
-    final2.moduleserialnumber,
-    final2.gt20000_gt20perc_sampevents
+    final.moduleserialnumber,
+    final.gt20000_gt20perc_sampevents
 having
-    not ( count(final2.moduleserialnumber) <= %s )
+    not ( count(final.moduleserialnumber) > <CUVETTEWASH_NUMCUVETTES_MIN> )
 order by
-    final2.moduleserialnumber,
-    final2.gt20000_gt20perc_sampevents"
+    final.moduleserialnumber,
+    final.gt20000_gt20perc_sampevents"
     #
     flagged <- "N"
     #

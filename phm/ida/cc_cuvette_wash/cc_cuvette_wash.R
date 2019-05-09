@@ -66,38 +66,14 @@ exec_query <- function(params,
     #
     # substitute values into query
     #
-    query <- sprintf(query_template, 
-                     params["CUVETTEINTEGRITY_PERCSAMPEVENTS_MIN",
-                            "PARAMETER_VALUE"],
-                     params["CUVETTEINTEGRITY_DISBEGAVG_MIN",
-                            "PARAMETER_VALUE"],
-                     config["START_DATE",
-                            "VALUE"],
-                     config["END_DATE",
-                            "VALUE"],
-                     config["START_DATE",
-                            "VALUE"],
-                     config["END_DATE",
-                            "VALUE"],
-                     config["START_DATE",
-                            "VALUE"],
-                     config["END_DATE",
-                            "VALUE"],
-                     params["CUVETTEINTEGRITY_SAMPEVENTS_MIN",
-                            "PARAMETER_VALUE"],
-                     params["CUVETTEINTEGRITY_SEGMENT1",
-                            "PARAMETER_VALUE"],
-                     params["CUVETTEINTEGRITY_SEGMENT2",
-                            "PARAMETER_VALUE"],
-                     params["THRESHOLDS_COUNT",
-                            "PARAMETER_VALUE"],
-                     params["CUVETTEINTEGRITY_NUMCUVETTES_MAX",
-                            "PARAMETER_VALUE"])
+    query <- query_subs(query_template, config, "VALUE")
+    query <- query_subs(query, params, "PARAMETER_VALUE")
     #
     query_time <- system.time({
         results <- dbGetQuery(db_conn, query)
     })
     print(query_time)
+    #
     if (nrow(results) == 0) {
         #
         # create an empty data frame with the correct columns
@@ -153,10 +129,8 @@ select
 from (
     select
         middle1.*,
-        (middle1.num_sampevents_gt20000_percuv / 
-         middle1.num_sampevents_percuv) as perc_sampevents_gt20000_percuv,
         case when (middle1.num_sampevents_gt20000_percuv / 
-                   middle1.num_sampevents_percuv) > %s
+                   middle1.num_sampevents_percuv) > <CUVETTEWASH_PERCSAMPEVENTS_MIN>
              then 1
              else 0
              end as gt20000_gt20perc_sampevents
@@ -185,7 +159,7 @@ from (
                 r.systemsn,
                 r.testid as results_testid,
                 r.cuvettenumber,
-                case when sdp.dispensebeginaverage > %s
+                case when sdp.dispensebeginaverage > <CUVETTEWASH_DISBEGAVG_MIN>
                      then 1
                      else 0
                      end as check_gt20000
@@ -194,10 +168,10 @@ from (
             left join 
                 idaqowner.icq_ccdispensepm dpm
             on 
-                to_timestamp('%s', 
+                to_timestamp('<START_DATE>', 
                              'MM/DD/YYYY HH24:MI:SS') <= dpm.logdate_local
             and 
-                dpm.logdate_local < to_timestamp('%s', 
+                dpm.logdate_local < to_timestamp('<END_DATE>', 
                                                  'MM/DD/YYYY HH24:MI:SS')
             and
                 sdp.systemsn = dpm.systemsn
@@ -218,24 +192,24 @@ from (
             left join 
                 idaqowner.icq_results r
             on 
-                to_timestamp('%s', 
+                to_timestamp('<START_DATE>', 
                              'MM/DD/YYYY HH24:MI:SS') <= r.logdate_local
             and 
-                r.logdate_local < to_timestamp('%s', 
+                r.logdate_local < to_timestamp('<END_DATE>', 
                                                'MM/DD/YYYY HH24:MI:SS')
             and
                 dpm.systemsn = r.systemsn
             and 
                 dpm.testid = r.testid
             where
-                to_timestamp('%s', 
+                to_timestamp('<START_DATE>', 
                              'MM/DD/YYYY HH24:MI:SS') <= sdp.logdate_local
             and 
-                sdp.logdate_local < to_timestamp('%s', 
+                sdp.logdate_local < to_timestamp('<END_DATE>', 
                                                  'MM/DD/YYYY HH24:MI:SS')
             and 
                 r.cuvettenumber is not null
-        ) inner1        
+        ) inner1       
         group by
             inner1.modulesn,
             inner1.cuvettenumber
@@ -245,12 +219,12 @@ from (
         ) middle1
     ) final
 where
-    final.gt20000_gt20perc_sampevents = %s
+    final.gt20000_gt20perc_sampevents = <THRESHOLD_COUNT>
 group by
     final.modulesn,
     final.gt20000_gt20perc_sampevents
 having
-    count(final2.modulesn) > %s
+    count(final.modulesn) > <CUVETTEWASH_NUMCUVETTES_MIN>
 order by
     final.modulesn,
     final.gt20000_gt20perc_sampevents"
@@ -281,10 +255,8 @@ select
 from (
     select
         middle1.*,
-        (middle1.num_sampevents_gt20000_percuv / 
-         middle1.num_sampevents_percuv) as perc_sampevents_gt20000_percuv,
         case when (middle1.num_sampevents_gt20000_percuv / 
-                   middle1.num_sampevents_percuv) > %s
+                   middle1.num_sampevents_percuv) > <CUVETTEWASH_PERCSAMPEVENTS_MIN>
              then 1
              else 0
              end as gt20000_gt20perc_sampevents
@@ -313,7 +285,7 @@ from (
                 r.systemsn,
                 r.testid as results_testid,
                 r.cuvettenumber,
-                case when sdp.dispensebeginaverage > %s
+                case when sdp.dispensebeginaverage > <CUVETTEWASH_DISBEGAVG_MIN>
                      then 1
                      else 0
                      end as check_gt20000
@@ -322,10 +294,10 @@ from (
             left join 
                 idaqowner.icq_ccdispensepm dpm
             on 
-                to_timestamp('%s', 
+                to_timestamp('<START_DATE>', 
                              'MM/DD/YYYY HH24:MI:SS') <= dpm.logdate_local
             and 
-                dpm.logdate_local < to_timestamp('%s', 
+                dpm.logdate_local < to_timestamp('<END_DATE>', 
                                                  'MM/DD/YYYY HH24:MI:SS')
             and
                 sdp.systemsn = dpm.systemsn
@@ -346,20 +318,20 @@ from (
             left join 
                 idaqowner.icq_results r
             on 
-                to_timestamp('%s', 
+                to_timestamp('<START_DATE>', 
                              'MM/DD/YYYY HH24:MI:SS') <= r.logdate_local
             and 
-                r.logdate_local < to_timestamp('%s', 
+                r.logdate_local < to_timestamp('<END_DATE>', 
                                                'MM/DD/YYYY HH24:MI:SS')
             and
                 dpm.systemsn = r.systemsn
             and 
                 dpm.testid = r.testid
             where
-                to_timestamp('%s', 
+                to_timestamp('<START_DATE>', 
                              'MM/DD/YYYY HH24:MI:SS') <= sdp.logdate_local
             and 
-                sdp.logdate_local < to_timestamp('%s', 
+                sdp.logdate_local < to_timestamp('<END_DATE>', 
                                                  'MM/DD/YYYY HH24:MI:SS')
             and 
                 r.cuvettenumber is not null
@@ -373,12 +345,12 @@ from (
         ) middle1
     ) final
 where
-    not ( final.gt20000_gt20perc_sampevents = %s )
+    not ( final.gt20000_gt20perc_sampevents = <THRESHOLD_COUNT> )
 group by
     final.modulesn,
     final.gt20000_gt20perc_sampevents
 having
-    not ( count(final2.modulesn) > %s )
+    not ( count(final.modulesn) > <CUVETTEWASH_NUMCUVETTES_MIN> )
 order by
     final.modulesn,
     final.gt20000_gt20perc_sampevents"

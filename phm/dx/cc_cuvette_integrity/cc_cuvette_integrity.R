@@ -129,8 +129,6 @@ select
 from (
     select
         middle2.*,
-        (middle2.num_sampevents_gt20000_percuv / 
-         middle2.num_sampevents_percuv) as perc_sampevents_gt20000_percuv,
         case when (middle2.num_sampevents_gt20000_percuv / 
                    middle2.num_sampevents_percuv) > <CUVETTEINTEGRITY_PERCSAMPEVENTS_MIN>
              then 1
@@ -259,8 +257,6 @@ select
 from (
     select
         middle2.*,
-        (middle2.num_sampevents_gt20000_percuv / 
-         middle2.num_sampevents_percuv) as perc_sampevents_gt20000_percuv,
         case when (middle2.num_sampevents_gt20000_percuv / 
                    middle2.num_sampevents_percuv) > <CUVETTEINTEGRITY_PERCSAMPEVENTS_MIN>
              then 1
